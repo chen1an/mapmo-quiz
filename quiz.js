@@ -886,45 +886,44 @@
     return div;
   }
 
-  // 10. 3D 情緒樹 ⇄ 像素花園 QR Code 互動生成引擎 (Louis Raille Style V2)
+  // 10. 3D 情緒樹 ⇄ 像素花園 QR Code 互動生成引擎 (Louis Raille Style V3 - 真實分枝大樹與 3D 深度排序)
   const FIXED_QUIZ_GITHUB_URL = 'https://chen1an.github.io/mapmo-quiz/';
 
-  // 6 種調色盤定義：全面加深頂部亮階飽和度（避免在 #F6F2EA 淺米白底色上看不清楚），
-  // 且確保「樹葉顏色 === 落下後的 QR Code 磚塊顏色」（粉色葉子落下就是粉色 QR Code！）
+  // 6 種調色盤定義：飽和立體明暗 5 階 + 同色系 QR 磚塊色階
   const TREE_QR_PALETTES = {
     pink: {
       label: '櫻花粉 (樂)',
-      foliage: ['#B53F5C', '#C94E6C', '#DC607E', '#E87490', '#F088A2'],
-      qrTiles: ['#C94E6C', '#DC607E', '#E87490', '#B53F5C']
+      foliage: ['#A83854', '#BF4866', '#D45A79', '#E6718F', '#F28AA5'],
+      qrTiles: ['#BF4866', '#D45A79', '#E6718F', '#A83854']
     },
     purple: {
       label: '薰衣草紫',
-      foliage: ['#4B2FB3', '#5E42C7', '#7156DB', '#866CEB', '#9A83F5'],
-      qrTiles: ['#5E42C7', '#7156DB', '#866CEB', '#4B2FB3']
+      foliage: ['#462BA8', '#593DC2', '#6E52DB', '#846AEB', '#9A83F5'],
+      qrTiles: ['#593DC2', '#6E52DB', '#846AEB', '#462BA8']
     },
     red: {
       label: '楓葉紅 (怒)',
-      foliage: ['#941F17', '#B02B22', '#CC3B31', '#E05046', '#EE685E'],
-      qrTiles: ['#B02B22', '#CC3B31', '#E05046', '#941F17']
+      foliage: ['#8F1D15', '#AD2920', '#C9382E', '#DF4F45', '#EF695E'],
+      qrTiles: ['#AD2920', '#C9382E', '#DF4F45', '#8F1D15']
     },
     yellow: {
       label: '暖陽金 (喜)',
-      foliage: ['#9E6804', '#B87C0B', '#CF9015', '#E3A524', '#F0B93A'],
-      qrTiles: ['#B87C0B', '#CF9015', '#E3A524', '#9E6804']
+      foliage: ['#946103', '#B07609', '#C98A12', '#E0A122', '#F0B838'],
+      qrTiles: ['#B07609', '#C98A12', '#E0A122', '#946103']
     },
     blue: {
       label: '晴空藍 (哀)',
-      foliage: ['#255599', '#3468B0', '#467EC7', '#5B94DC', '#73AAEE'],
-      qrTiles: ['#3468B0', '#467EC7', '#5B94DC', '#255599']
+      foliage: ['#214E8F', '#3062AB', '#4278C4', '#588FD9', '#70A6EC'],
+      qrTiles: ['#3062AB', '#4278C4', '#588FD9', '#214E8F']
     },
     grey: {
-      label: '靜謐霧灰 (無)',
-      foliage: ['#435463', '#556778', '#687B8C', '#7C90A1', '#91A4B5'],
-      qrTiles: ['#556778', '#687B8C', '#7C90A1', '#435463']
+      label: '銀霧白 / 暮灰 (無)',
+      foliage: ['#536373', '#667788', '#7A8C9E', '#8FA2B3', '#A6B7C7'],
+      qrTiles: ['#536373', '#667788', '#7A8C9E', '#445361']
     }
   };
 
-  // 季節草地與定位框配色：強化春（嫩綠+繁花）、夏（深翠綠+高大茂密草叢+流螢）、秋（金橘紅+落楓地毯）的顯著差異
+  // 季節草地與定位框配色：春（嫩綠+繁花）、夏（深翠綠+高大茂密草叢+流螢）、秋（金橘紅+落楓地毯）
   const SEASON_THEMES = {
     spring: {
       grass: ['#669E34', '#7AB542', '#8EC754', '#A2D468'],
@@ -955,6 +954,19 @@
     }
   };
 
+  // 8 個真實大樹分枝樹冠團塊 (Multi-Tiered Canopy Boughs)
+  // 每一個團塊都精準對應一條從主幹伸出的 3D 分枝，創造高挺樹幹 + 蓬鬆分層大樹剪影
+  const TREE_BOUGHS = [
+    { u: -0.05, v: -0.05, h: 256, rx: 0.25, ry: 0.25, rh: 28, branchStartH: 132, branchW: 5.5 }, // 0: 高聳樹頂尖峰
+    { u: -0.28, v: 0.04,  h: 214, rx: 0.30, ry: 0.27, rh: 26, branchStartH: 122, branchW: 6.0 }, // 1: 左上中高冠
+    { u: 0.16,  v: -0.28, h: 218, rx: 0.30, ry: 0.27, rh: 26, branchStartH: 122, branchW: 6.0 }, // 2: 右上中高冠
+    { u: -0.34, v: -0.36, h: 178, rx: 0.35, ry: 0.33, rh: 26, branchStartH: 108, branchW: 6.5 }, // 3: 正後方襯底大冠
+    { u: -0.60, v: 0.28,  h: 144, rx: 0.34, ry: 0.31, rh: 24, branchStartH: 92,  branchW: 7.2 }, // 4: 左側寬大展開翼 (橫跨左側島嶼)
+    { u: 0.50,  v: -0.54, h: 148, rx: 0.34, ry: 0.31, rh: 24, branchStartH: 94,  branchW: 7.2 }, // 5: 右側寬大展開翼 (橫跨右側島嶼)
+    { u: -0.18, v: 0.44,  h: 164, rx: 0.28, ry: 0.26, rh: 22, branchStartH: 105, branchW: 5.8 }, // 6: 左前高挑分枝冠
+    { u: 0.44,  v: 0.10,  h: 160, rx: 0.28, ry: 0.26, rh: 22, branchStartH: 105, branchW: 5.8 }  // 7: 右前高挑分枝冠
+  ];
+
   let treeQrState = {
     url: FIXED_QUIZ_GITHUB_URL,
     mode: 'tree',         // 'tree' (p->0) | 'qr' (p->1)
@@ -963,8 +975,7 @@
     season: 'spring',
     colorKey: 'pink',
     qrModel: null,
-    leafParticles: [],    // 每一格 QR 深色資料磚對應一片樹葉，點擊時直接從樹冠飄落拼成地面 QR Code
-    foliageNodes: [],     // 樹冠內層豐盈襯底葉團
+    leafParticles: [],    // 每一格 QR 深色資料磚對應一片樹冠小葉，點擊時直接飄落拼成地面 QR Code
     grassBlades: [],
     seasonAccents: [],    // 春花 / 夏螢 / 秋楓
     floatingPetals: [],
@@ -989,12 +1000,11 @@
     if (r < 7 && c < 7) return true;
     if (r < 7 && c >= count - 7) return true;
     if (r >= count - 7 && c < 7) return true;
-    // 外圍兩圈邊界深色格同樣渲染為草皮與泥土，構成完整花園島嶼邊框
     if (r < 2 || r >= count - 2 || c < 2 || c >= count - 2) return true;
     return false;
   }
 
-  // 建立 QR 矩陣與「樹葉即 QR 磚塊 (Leaf-to-QR 1:1 Particles)」巨型樹冠幾何
+  // 建立 QR 矩陣與「葉片構成 8 團分枝大樹 ⇄ 飄落拼成 QR 磚塊」幾何
   function rebuildQrAndTreeGeometry(urlText) {
     if (typeof QRCode === 'undefined' || !QRCode.QRCodeModel) return;
     const text = (urlText || FIXED_QUIZ_GITHUB_URL).trim();
@@ -1009,8 +1019,8 @@
     rebuildLeafParticlesFromQrModel(model);
   }
 
-  // 核心魔法：讓每一個內部 QR Code 深色子像素在 3D 模式下化為樹冠上的一片樹葉，
-  // 且樹冠範圍擴大至 u,v ∈ [-0.92, 0.92]，完全覆蓋整個 QR Code 變化區域！
+  // 核心演算法：將地面所有內部 QR Code 深色子像素有結構地分派至 8 個立體大樹冠團塊，
+  // 控制單葉細緻尺度 + 保留樹幹視窗走廊，達成「枝葉分明、高挺寬闊的像素大樹」效果！
   function rebuildLeafParticlesFromQrModel(model) {
     const count = model.getModuleCount();
     const subCount = count * 2;
@@ -1034,32 +1044,60 @@
             const qrU = (u0 + u1) * 0.5;
             const qrV = (v0 + v1) * 0.5;
 
-            // 將地面 QR 座標映射至巨型蓬鬆樹冠 (覆蓋 -0.92 ~ +0.92 全島範圍)
-            const distFromCenter = Math.min(1.15, Math.hypot(qrU, qrV) / 0.85);
-            const angle = Math.atan2(qrV, qrU) + (hash2D(gr, gc, 17) - 0.5) * 0.55;
-            const radialExpand = 0.25 + distFromCenter * 0.68 + (hash2D(gr, gc, 23) - 0.5) * 0.16;
+            // 挑選最適配這顆地面磚塊的樹冠分枝團塊 (就近方位 + 確定性分布均衡到樹頂)
+            let boughIdx = 0;
+            const radial = Math.hypot(qrU, qrV);
+            if (radial < 0.24) {
+              boughIdx = idx % 3 === 0 ? 0 : (idx % 3 === 1 ? 1 : 2);
+            } else {
+              let bestScore = Infinity;
+              for (let bi = 0; bi < TREE_BOUGHS.length; bi++) {
+                const b = TREE_BOUGHS[bi];
+                const d = Math.hypot(qrU - b.u, qrV - b.v) + hash2D(gr, gc, 11 + bi) * 0.25;
+                if (d < bestScore) {
+                  bestScore = d;
+                  boughIdx = bi;
+                }
+              }
+            }
+            const bough = TREE_BOUGHS[boughIdx];
 
-            const domeProfile = Math.max(0, 1 - Math.pow(radialExpand / 0.98, 1.65));
-            const treeH = 54 + domeProfile * 148 + (hash2D(gr, gc, 31) - 0.35) * 44;
+            // 在該分枝團塊橢球內生成輕盈有機小簇 (使用根號分布使表面輪廓清晰、內部保留層次)
+            const theta = hash2D(gr, gc, 17) * Math.PI * 2;
+            const phi = Math.acos(2 * hash2D(gr, gc, 23) - 1);
+            const shellR = 0.35 + Math.pow(hash2D(gr, gc, 29), 0.45) * 0.65;
 
-            const heightNorm = Math.max(0, Math.min(1, (treeH - 45) / 175));
-            const maxR = 0.22 + Math.sin(heightNorm * Math.PI * 0.88) * 0.72;
-            const finalR = Math.min(0.92, radialExpand * (0.62 + maxR * 0.52));
+            const dx = Math.sin(phi) * Math.cos(theta) * shellR;
+            const dy = Math.sin(phi) * Math.sin(theta) * shellR;
+            const dz = Math.cos(phi) * shellR;
 
-            const treeU = Math.cos(angle) * finalR;
-            const treeV = Math.sin(angle) * finalR;
+            let treeU = bough.u + dx * bough.rx;
+            let treeV = bough.v + dy * bough.ry;
+            let treeH = bough.h + dz * bough.rh;
 
-            const lightScore = (treeH - 52) / 162 - (treeU + treeV) * 0.22 + (hash2D(gr, gc, 41) - 0.5) * 0.2;
-            const shadeIdx = Math.max(0, Math.min(4, Math.floor(lightScore * 5)));
-            const leafW = 14 + hash2D(gr, gc, 53) * 11;
-            const leafH = 9.5 + hash2D(gr, gc, 61) * 7.5;
-            const delay = hash2D(gr, gc, 71) * 0.26;
+            // 絕對淨空保護門檻 (Trunk Corridor Guard)：確保正前方與中央樹幹區域 (u+v > -0.15, |u-v| < 0.35)
+            // 不會出現遮擋主幹的低垂葉片，讓樹幹與 Y 型分枝始終清晰立體！
+            const frontness = treeU + treeV;
+            const lateral = Math.abs(treeU - treeV);
+            if (frontness > -0.12 && lateral < 0.38 && treeH < 142) {
+              treeH = 144 + hash2D(gr, gc, 37) * 28;
+            }
+
+            // 以左上受光面與高度算出局部立體明暗階層 (每團樹冠底部較深、外緣頂端明亮)
+            const localLight = dz * 0.55 - (dx + dy) * 0.32 + (treeH - 135) / 145 * 0.42 + (hash2D(gr, gc, 41) - 0.5) * 0.25;
+            const shadeIdx = Math.max(0, Math.min(4, Math.floor((localLight + 0.55) * 3.8)));
+
+            // 精緻像素小葉尺寸 (避免 1,400+ 片糊成實心水泥球，保留透氣邊緣感)
+            const leafW = 6.2 + hash2D(gr, gc, 53) * 4.4;
+            const leafH = 4.5 + hash2D(gr, gc, 61) * 3.2;
+            const delay = hash2D(gr, gc, 71) * 0.28;
             const swirlSign = hash2D(gr, gc, 83) > 0.5 ? 1 : -1;
+            const depth = treeU + treeV;
 
             particles.push({
               r, c, sr, sc, gr, gc,
               u0, v0, u1, v1, qrU, qrV,
-              treeU, treeV, treeH,
+              treeU, treeV, treeH, depth,
               shadeIdx, leafW, leafH,
               delay, swirlSign,
               seed: idx
@@ -1068,42 +1106,14 @@
         }
       }
     }
+
+    // 預先依 3D 等距深度排序：遠處背面葉片在前、前側葉片在後，配合 Painter's Algorithm 與樹幹分層
+    particles.sort((a, b) => (a.depth * 100 + a.treeH * 0.14) - (b.depth * 100 + b.treeH * 0.14));
     treeQrState.leafParticles = particles;
   }
 
   function generateProceduralTreeGeometry() {
-    // 1. 巨型樹冠內層豐盈襯底團塊 (擴大至覆蓋整座 QR 島嶼)
-    const foliage = [];
-    const boughs = [
-      { u: 0.0,   v: 0.0,   h: 205, rx: 0.34, ry: 0.34, rh: 38, count: 32 }, // 高聳樹頂冠冕
-      { u: -0.24, v: 0.14,  h: 162, rx: 0.48, ry: 0.46, rh: 42, count: 35 }, // 中上左大團
-      { u: 0.22,  v: -0.18, h: 165, rx: 0.48, ry: 0.46, rh: 42, count: 35 }, // 中上右大團
-      { u: 0.10,  v: 0.22,  h: 128, rx: 0.58, ry: 0.55, rh: 38, count: 38 }, // 中央前蓬鬆主團
-      { u: -0.38, v: 0.32,  h: 96,  rx: 0.52, ry: 0.48, rh: 32, count: 30 }, // 下方左側外擴垂枝
-      { u: 0.36,  v: -0.30, h: 98,  rx: 0.52, ry: 0.48, rh: 32, count: 30 }  // 下方右側外擴垂枝
-    ];
-
-    let idx = 1;
-    boughs.forEach((b) => {
-      for (let i = 0; i < b.count; i++) {
-        idx++;
-        const r1 = hash2D(idx, 1, 10) * 2 - 1;
-        const r2 = hash2D(idx, 2, 20) * 2 - 1;
-        const r3 = hash2D(idx, 3, 30) * 2 - 1;
-        const u = b.u + r1 * b.rx;
-        const v = b.v + r2 * b.ry;
-        const h = b.h + r3 * b.rh;
-        const lightScore = (h - 55) / 165 - (u + v) * 0.22 + (hash2D(idx, 4, 40) - 0.5) * 0.22;
-        const shadeIdx = Math.max(0, Math.min(4, Math.floor(lightScore * 5)));
-        const size = 14 + hash2D(idx, 5, 50) * 12;
-        foliage.push({ u, v, h, shadeIdx, size, seed: idx });
-      }
-    });
-
-    foliage.sort((a, b) => ((a.u + a.v) * 60 + a.h * 0.15) - ((b.u + b.v) * 60 + b.h * 0.15));
-    treeQrState.foliageNodes = foliage;
-
-    // 2. 生成 3 個定位角與四周邊框的 3D 搖曳草叢 (數量增至 280 株)
+    // 1. 生成 3 個定位角與四周邊框的 3D 搖曳草叢 (數量增至 280 株)
     const blades = [];
     for (let i = 0; i < 280; i++) {
       let u = 0, v = 0;
@@ -1137,7 +1147,7 @@
     }
     treeQrState.grassBlades = blades;
 
-    // 3. 季節專屬地面與草叢點綴 (春季繽紛小花 / 夏季流螢光點 / 秋季紅楓地毯)
+    // 2. 季節專屬地面與草叢點綴 (春季繽紛小花 / 夏季流螢光點 / 秋季紅楓地毯)
     const accents = [];
     for (let i = 0; i < 48; i++) {
       const targetBlade = blades[i * 5 % blades.length];
@@ -1152,13 +1162,13 @@
     }
     treeQrState.seasonAccents = accents;
 
-    // 4. 空中飄落花瓣/葉片 (範圍跟隨大樹冠擴展)
+    // 3. 空中飄落花瓣/葉片 + 地面樹幹周圍落花
     const floating = [];
     for (let i = 0; i < 24; i++) {
       floating.push({
         u: (hash2D(i, 81, 9) - 0.5) * 1.35,
         v: (hash2D(i, 82, 9) - 0.5) * 1.35,
-        h: 18 + hash2D(i, 83, 9) * 165,
+        h: 18 + hash2D(i, 83, 9) * 195,
         speed: 16 + hash2D(i, 84, 9) * 16,
         phase: hash2D(i, 85, 9) * Math.PI * 2,
         shade: Math.floor(hash2D(i, 86, 9) * 4) + 1
@@ -1195,7 +1205,66 @@
     return palette.qrTiles[cIdx];
   }
 
-  // 主畫布渲染迴圈 (支援「巨型 3D 情緒樹葉直接飄落拼成同色 QR Code」絲滑變形)
+  // 繪製 3D 立體樹幹與連接至 8 團樹冠中心的真實空間樹枝
+  function drawTrunkAndBranches3D(ctx, project, treeScale) {
+    const trunkBase = project(0, 0, 0);
+    const trunkMid = project(0, 0, 72 * treeScale);
+    const trunkTop = project(0, 0, 146 * treeScale);
+
+    // 1. 樹幹根部微微抓地寬座與樹影
+    ctx.fillStyle = 'rgba(62, 38, 24, 0.22)';
+    ctx.beginPath();
+    ctx.ellipse(trunkBase.x, trunkBase.y + 3 * treeScale, 32 * treeScale, 14 * treeScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 主幹深色背光陰影面
+    ctx.fillStyle = '#3B2315';
+    ctx.beginPath();
+    ctx.moveTo(trunkBase.x - 20 * treeScale, trunkBase.y + 3 * treeScale);
+    ctx.quadraticCurveTo(trunkMid.x - 11 * treeScale, trunkMid.y, trunkTop.x - 7 * treeScale, trunkTop.y);
+    ctx.lineTo(trunkTop.x + 8 * treeScale, trunkTop.y);
+    ctx.quadraticCurveTo(trunkMid.x + 12 * treeScale, trunkMid.y, trunkBase.x + 21 * treeScale, trunkBase.y + 3 * treeScale);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. 主幹受光面亮部紋理
+    ctx.fillStyle = '#6B452F';
+    ctx.beginPath();
+    ctx.moveTo(trunkBase.x - 6 * treeScale, trunkBase.y + 2 * treeScale);
+    ctx.quadraticCurveTo(trunkMid.x - 3 * treeScale, trunkMid.y, trunkTop.x - 2 * treeScale, trunkTop.y);
+    ctx.lineTo(trunkTop.x + 7 * treeScale, trunkTop.y);
+    ctx.quadraticCurveTo(trunkMid.x + 10 * treeScale, trunkMid.y, trunkBase.x + 13 * treeScale, trunkBase.y + 2 * treeScale);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. 連接至 8 個分枝冠團中心的真實 3D 空間樹枝
+    ctx.lineCap = 'round';
+    TREE_BOUGHS.forEach((b, bIdx) => {
+      const startPt = project(0, 0, b.branchStartH * treeScale);
+      const endPt = project(b.u * 0.78 * treeScale, b.v * 0.78 * treeScale, (b.h - 14) * treeScale);
+      const ctrlPt = project(b.u * 0.35 * treeScale, b.v * 0.35 * treeScale, (b.branchStartH + (b.h - b.branchStartH) * 0.6) * treeScale);
+
+      // 外側深色枝條輪廓
+      ctx.strokeStyle = '#3E2517';
+      ctx.lineWidth = b.branchW * treeScale;
+      ctx.beginPath();
+      ctx.moveTo(startPt.x, startPt.y);
+      ctx.quadraticCurveTo(ctrlPt.x, ctrlPt.y, endPt.x, endPt.y);
+      ctx.stroke();
+
+      // 內側受光棕木亮線
+      if (bIdx >= 4) {
+        ctx.strokeStyle = '#5E3B27';
+        ctx.lineWidth = (b.branchW * 0.45) * treeScale;
+        ctx.beginPath();
+        ctx.moveTo(startPt.x + 1, startPt.y - 1);
+        ctx.quadraticCurveTo(ctrlPt.x + 1, ctrlPt.y - 1, endPt.x + 1, endPt.y - 1);
+        ctx.stroke();
+      }
+    });
+  }
+
+  // 主畫布渲染迴圈 (Painter's Algorithm 分層渲染：背面葉冠 -> 3D 樹幹樹枝 -> 前方葉冠 -> 飄落動畫)
   function renderTreeQrStudioFrame(timestamp) {
     const canvas = document.getElementById('treeQrInteractiveCanvas');
     if (!canvas) return;
@@ -1229,15 +1298,15 @@
 
     const count = treeQrState.qrModel.getModuleCount();
 
-    // 投影參數插值 (p=0: 45度等距俯視; p=1: 0度正面俯視)
+    // 投影參數插值 (p=0: 高挺大樹等距視角 centerY=368 留出充足樹高; p=1: QR 平面置中 centerY=260)
     const angle = (1 - p) * (Math.PI / 4);
     const cosA = Math.cos(angle);
     const sinA = Math.sin(angle);
-    const tiltY = 0.56 + 0.44 * p;
-    const radius = 158 + 42 * p;
+    const tiltY = 0.54 + 0.46 * p;
+    const radius = 154 + 48 * p;
     const centerX = W / 2;
-    const centerY = 334 - 74 * p;
-    const treeScale = Math.max(0, 1 - p * 1.15);
+    const centerY = 368 - 108 * p;
+    const treeScale = Math.max(0, 1 - p * 1.18);
 
     function project(u, v, h = 0) {
       const xr = (u * cosA - v * sinA) * radius;
@@ -1248,14 +1317,13 @@
       };
     }
 
-    // 2. 繪製 3D 島嶼底座側面厚度 (當 p < 0.99 時顯示立體石板與季節草皮邊緣)
+    // 2. 繪製 3D 島嶼底座側面厚度
     if (p < 0.99) {
-      const slabDepth = 17 * (1 - p);
+      const slabDepth = 16 * (1 - p);
       const pLeft = project(-1, 1, 0);
       const pFront = project(1, 1, 0);
       const pRight = project(1, -1, 0);
 
-      // 左前立體側面
       ctx.beginPath();
       ctx.moveTo(pLeft.x, pLeft.y);
       ctx.lineTo(pFront.x, pFront.y);
@@ -1265,7 +1333,6 @@
       ctx.fillStyle = '#B8B4AA';
       ctx.fill();
 
-      // 左前季節草皮上緣飾條
       ctx.beginPath();
       ctx.moveTo(pLeft.x, pLeft.y);
       ctx.lineTo(pFront.x, pFront.y);
@@ -1275,7 +1342,6 @@
       ctx.fillStyle = seasonTheme.slabGrassLeft;
       ctx.fill();
 
-      // 右前立體側面
       ctx.beginPath();
       ctx.moveTo(pFront.x, pFront.y);
       ctx.lineTo(pRight.x, pRight.y);
@@ -1285,7 +1351,6 @@
       ctx.fillStyle = '#99958B';
       ctx.fill();
 
-      // 右前季節草皮上緣飾條
       ctx.beginPath();
       ctx.moveTo(pFront.x, pFront.y);
       ctx.lineTo(pRight.x, pRight.y);
@@ -1297,7 +1362,6 @@
     }
 
     // 3. 繪製地面石板底座與定位角草皮
-    // (內部深色 QR 資料格在 p < 1 時為淺灰石板凹槽，等樹葉從樹冠落下歸位填滿！)
     const subCount = count * 2;
     for (let r = 0; r < count; r++) {
       for (let c = 0; c < count; c++) {
@@ -1317,12 +1381,10 @@
             let tileColor = qrColor;
 
             if (!isFinder && isDark) {
-              // 內部深色資料格：在樹模式下是溫潤灰石板陰影，當樹葉完全落下 (p > 0.85) 時鎖定為同色系 QR 磚
               const stoneShadow = hash2D(gr, gc, 55) > 0.5 ? '#D8D3C8' : '#CFC9BD';
               const settleT = Math.max(0, Math.min(1, (p - 0.72) / 0.28));
               tileColor = lerpHexColor(stoneShadow, qrColor, settleT);
             } else if (isFinder && !isDark && treeQrState.season === 'autumn') {
-              // 秋季定位框淺色格帶一點暖米色調
               tileColor = '#EFE9DC';
             }
 
@@ -1344,7 +1406,7 @@
       }
     }
 
-    // 4. 繪製四季分明的搖曳草叢與季節裝飾 (春花 / 夏日茂密高草+流螢 / 秋楓地毯)
+    // 4. 繪製地面搖曳草叢與季節專屬點綴 (春花 / 夏日高草+流螢 / 秋楓地毯)
     if (treeScale > 0.01) {
       ctx.save();
       ctx.globalAlpha = Math.min(1, treeScale * 1.15);
@@ -1352,7 +1414,6 @@
       const breeze = Math.sin(timestamp * 0.0028) * 3.8;
       const gScale = seasonTheme.grassScale || 1.0;
 
-      // 4a. 三個定位角與四周邊框的 3D 搖曳像素草葉 (夏季高度 1.75x 且加粗雙葉)
       treeQrState.grassBlades.forEach((gb, idx) => {
         const base = project(gb.u, gb.v, 0);
         const h = gb.height * gScale * treeScale;
@@ -1364,7 +1425,6 @@
         ctx.quadraticCurveTo(base.x + (gb.lean + sway) * 0.5, base.y - h * 0.55, base.x + gb.lean + sway, base.y - h);
         ctx.stroke();
 
-        // 夏季額外繪製茂密副草葉，讓春與夏的草地形成強烈視覺對比
         if (treeQrState.season === 'summer' && idx % 2 === 0) {
           const h2 = h * 0.78;
           ctx.strokeStyle = seasonTheme.grass[(gb.shade + 1) % 4];
@@ -1376,11 +1436,9 @@
         }
       });
 
-      // 4b. 季節專屬地面與草叢裝飾
       treeQrState.seasonAccents.forEach((acc) => {
         const color = seasonTheme.accentColors[acc.colorIdx];
         if (seasonTheme.accentType === 'flowers') {
-          // 春季：草地上盛開粉紅、鵝黃、純白、淡紫像素小野花
           const pt = project(acc.u, acc.v, 3 * treeScale);
           const s = acc.size * treeScale;
           ctx.fillStyle = color;
@@ -1389,7 +1447,6 @@
           ctx.fillStyle = '#FFE066';
           ctx.fillRect(pt.x - s * 0.22, pt.y - s * 0.22, s * 0.44, s * 0.44);
         } else if (seasonTheme.accentType === 'fireflies') {
-          // 夏季：茂密深綠草叢間閃爍漂浮的金色流螢光點
           const bob = Math.sin(timestamp * 0.004 + acc.phase) * 8;
           const pt = project(acc.u, acc.v, (acc.floatH + bob) * treeScale);
           const pulse = 0.45 + 0.55 * Math.sin(timestamp * 0.006 + acc.phase * 2);
@@ -1399,7 +1456,6 @@
           ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
           ctx.globalAlpha = Math.min(1, treeScale * 1.15);
         } else if (seasonTheme.accentType === 'maple') {
-          // 秋季：滿地厚實的紅橘金黃落楓地毯
           const pt = project(acc.u * 0.85, acc.v * 0.85, 1.5 * treeScale);
           const s = acc.size * 1.35 * treeScale;
           ctx.fillStyle = color;
@@ -1407,108 +1463,74 @@
         }
       });
 
-      // 4c. 繪製高大厚實的中央 3D 樹幹與向四周伸展的樹枝 (支撐覆蓋全島的巨型樹冠)
-      const trunkBase = project(0, 0, 0);
-      const trunkTopY = trunkBase.y - 142 * treeScale;
-
-      ctx.fillStyle = '#3E2618';
-      ctx.beginPath();
-      ctx.moveTo(trunkBase.x - 19 * treeScale, trunkBase.y + 3);
-      ctx.quadraticCurveTo(trunkBase.x - 12 * treeScale, trunkBase.y - 58 * treeScale, trunkBase.x - 9 * treeScale, trunkTopY);
-      ctx.lineTo(trunkBase.x + 10 * treeScale, trunkTopY);
-      ctx.quadraticCurveTo(trunkBase.x + 13 * treeScale, trunkBase.y - 58 * treeScale, trunkBase.x + 20 * treeScale, trunkBase.y + 3);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#69452F';
-      ctx.beginPath();
-      ctx.moveTo(trunkBase.x - 6 * treeScale, trunkBase.y);
-      ctx.lineTo(trunkBase.x - 3 * treeScale, trunkTopY);
-      ctx.lineTo(trunkBase.x + 8 * treeScale, trunkTopY);
-      ctx.lineTo(trunkBase.x + 12 * treeScale, trunkBase.y);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#472D1D';
-      ctx.lineCap = 'round';
-      const branches = [
-        { x1: 0, y1: -58, x2: -64, y2: -106, w: 8.0 },
-        { x1: 0, y1: -66, x2: 68,  y2: -112, w: 8.0 },
-        { x1: -24, y1: -82, x2: -96, y2: -132, w: 6.0 },
-        { x1: 26, y1: -86, x2: 98,  y2: -136, w: 6.0 },
-        { x1: 0, y1: -102, x2: -45, y2: -172, w: 6.5 },
-        { x1: 0, y1: -106, x2: 48,  y2: -176, w: 6.5 }
-      ];
-      branches.forEach((br) => {
-        ctx.lineWidth = br.w * treeScale;
-        ctx.beginPath();
-        ctx.moveTo(trunkBase.x + br.x1 * treeScale, trunkBase.y + br.y1 * treeScale);
-        ctx.lineTo(trunkBase.x + br.x2 * treeScale, trunkBase.y + br.y2 * treeScale);
-        ctx.stroke();
-      });
-
-      // 4d. 繪製巨型樹冠內層豐盈襯底葉團
-      const windX = Math.sin(timestamp * 0.002) * 2.5;
-      treeQrState.foliageNodes.forEach((node) => {
-        const pos = project(node.u * treeScale, node.v * treeScale, node.h * treeScale);
-        const flutter = Math.sin(timestamp * 0.003 + node.seed) * 1.6 + windX * (node.h / 180);
-        const sx = pos.x + flutter;
-        const sy = pos.y;
-        const w = node.size * 1.55 * treeScale;
-        const h = node.size * 0.98 * treeScale;
-
-        ctx.fillStyle = palette.foliage[node.shadeIdx];
-        ctx.fillRect(sx - w / 2, sy - h / 2, w, h);
-      });
+      // 樹幹周圍地面散落的小花瓣
+      for (let i = 0; i < 28; i++) {
+        const ang = hash2D(i, 91, 3) * Math.PI * 2;
+        const r = 0.10 + hash2D(i, 92, 4) * 0.42;
+        const pt = project(Math.cos(ang) * r, Math.sin(ang) * r, 1);
+        ctx.fillStyle = palette.foliage[2 + (i % 3)];
+        ctx.fillRect(pt.x - 3 * treeScale, pt.y - 1.5 * treeScale, 6 * treeScale, 3 * treeScale);
+      }
 
       ctx.restore();
     }
 
-    // 5. 核心視覺：「每一片樹葉就是一格 QR Code 磚塊」！
-    // p=0 時構成覆蓋全島的蓬鬆大樹葉冠；點擊時 (p: 0 -> 1) 樹葉旋轉飄落，精準嵌入地面拼成同色系 QR Code！
-    if (p < 0.98) {
-      const windX = Math.sin(timestamp * 0.0022) * 2.4;
-      const orderedLeaves = treeQrState.leafParticles;
+    // 5. 核心視覺：「Painter's Algorithm 分層渲染」+「每片樹葉即一格 QR Code 磚塊」！
+    // 先畫背面樹冠葉片 (depth < 0.04) -> 再畫立體 3D 樹幹與大樹枝 -> 最後畫前側與頂層樹冠葉片 (depth >= 0.04)
+    const windX = Math.sin(timestamp * 0.0022) * 2.4;
+    const orderedLeaves = treeQrState.leafParticles;
+    let trunkDrawn = false;
 
+    const drawLeaf = (lp) => {
+      const localP = Math.max(0, Math.min(1, (p - lp.delay * 0.35) / (1 - lp.delay * 0.35)));
+      const easeP = localP < 0.5
+        ? 2 * localP * localP
+        : 1 - Math.pow(-2 * localP + 2, 2) / 2;
+
+      const swirl = Math.sin(localP * Math.PI) * 0.14 * lp.swirlSign;
+      const curU = lp.treeU * (1 - easeP) + lp.qrU * easeP + swirl;
+      const curV = lp.treeV * (1 - easeP) + lp.qrV * easeP - swirl * 0.7;
+      const curH = lp.treeH * Math.pow(1 - easeP, 1.35);
+
+      const pos = project(curU, curV, curH);
+      const flutter = (1 - easeP) * (Math.sin(timestamp * 0.0032 + lp.seed) * 1.5 + windX * (lp.treeH / 200));
+
+      const subSpan = ((1.06) / subCount) * 2 * radius;
+      const w = lp.leafW * (1 - easeP) + subSpan * easeP;
+      const h = lp.leafH * (1 - easeP) + subSpan * tiltY * easeP;
+
+      // 顏色全程保持所選色系（粉色葉子落下就是粉色 QR 磚）
+      ctx.fillStyle = palette.foliage[lp.shadeIdx];
+      ctx.fillRect(pos.x + flutter - w / 2, pos.y - h / 2, w, h);
+
+      // 僅對最亮外緣的 35% 受光葉片輕點精細像素高光，保留透氣層次不結塊
+      if (easeP < 0.55 && lp.shadeIdx >= 3 && (lp.seed % 3 === 0)) {
+        ctx.fillStyle = palette.foliage[4];
+        ctx.fillRect(pos.x + flutter - w * 0.25, pos.y - h * 0.5, w * 0.5, h * 0.4);
+      }
+    };
+
+    if (p < 0.98) {
       for (let i = 0; i < orderedLeaves.length; i++) {
         const lp = orderedLeaves[i];
-        // 每片樹葉依專屬 delay 錯開飄落時間，營造漫天落葉歸位感
-        const localP = Math.max(0, Math.min(1, (p - lp.delay * 0.35) / (1 - lp.delay * 0.35)));
-        // 平滑緩動曲線
-        const easeP = localP < 0.5
-          ? 2 * localP * localP
-          : 1 - Math.pow(-2 * localP + 2, 2) / 2;
-
-        // 飄落過程中的微幅盤旋渦流
-        const swirl = Math.sin(localP * Math.PI) * 0.14 * lp.swirlSign;
-        const curU = lp.treeU * (1 - easeP) + lp.qrU * easeP + swirl;
-        const curV = lp.treeV * (1 - easeP) + lp.qrV * easeP - swirl * 0.7;
-        const curH = lp.treeH * Math.pow(1 - easeP, 1.35);
-
-        const pos = project(curU, curV, curH);
-        const flutter = (1 - easeP) * (Math.sin(timestamp * 0.0032 + lp.seed) * 1.6 + windX * (lp.treeH / 185));
-
-        // 地面目標子像素四頂點尺寸
-        const g0 = project(lp.u0, lp.v0, 0);
-        const g2 = project(lp.u1, lp.v1, 0);
-        const groundW = Math.max(4, Math.abs(g2.x - g0.x));
-        const groundH = Math.max(4, Math.abs(g2.y - g0.y));
-
-        const w = lp.leafW * (1 - easeP) + groundW * easeP;
-        const h = lp.leafH * (1 - easeP) + groundH * easeP;
-
-        // 顏色全程保持所選色系（粉色樹葉落下就是粉色 QR 磚！）
-        const leafColor = palette.foliage[lp.shadeIdx];
-        ctx.fillStyle = leafColor;
-        ctx.fillRect(pos.x + flutter - w / 2, pos.y - h / 2, w, h);
-
-        // 在樹冠模式與飄落前半段疊加立體高光葉片層次
-        if (easeP < 0.65) {
-          const highlightIdx = Math.min(4, lp.shadeIdx + 1);
-          ctx.fillStyle = palette.foliage[highlightIdx];
-          ctx.fillRect(pos.x + flutter - w * 0.32, pos.y - h * 0.58, w * 0.64, h * 0.52);
+        if (!trunkDrawn && lp.depth >= 0.04) {
+          trunkDrawn = true;
+          if (treeScale > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, treeScale * 1.15);
+            drawTrunkAndBranches3D(ctx, project, treeScale);
+            ctx.restore();
+          }
         }
+        drawLeaf(lp);
       }
+    }
+
+    if (!trunkDrawn && treeScale > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, treeScale * 1.15);
+      drawTrunkAndBranches3D(ctx, project, treeScale);
+      ctx.restore();
     }
 
     // 6. 空中常駐緩緩飄落的花瓣/葉片動態 (樹模式下)
@@ -1517,11 +1539,11 @@
       ctx.globalAlpha = Math.min(1, treeScale);
       treeQrState.floatingPetals.forEach((ptl) => {
         ptl.h -= ptl.speed * dt;
-        if (ptl.h < 4) ptl.h = 168;
+        if (ptl.h < 4) ptl.h = 195;
         const driftU = ptl.u + Math.sin(timestamp * 0.0025 + ptl.phase) * 0.09;
         const pos = project(driftU * treeScale, ptl.v * treeScale, ptl.h * treeScale);
         ctx.fillStyle = palette.foliage[ptl.shade];
-        ctx.fillRect(pos.x - 4.2 * treeScale, pos.y - 2.6 * treeScale, 8.4 * treeScale, 5.2 * treeScale);
+        ctx.fillRect(pos.x - 3.6 * treeScale, pos.y - 2.2 * treeScale, 7.2 * treeScale, 4.4 * treeScale);
       });
       ctx.restore();
     }
