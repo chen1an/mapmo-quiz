@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="style.css?v=20261103_quiz_base">
 
     <!-- Dedicated Quiz Page CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261115_no_gif">
+    <link rel="stylesheet" href="quiz.css?v=20261115_tree_qr">
 </head>
 
 <body class="quiz-page">
@@ -84,6 +84,12 @@
                 <button class="start-btn-primary" id="startQuizBtn">
                     開始探索社群人格 <i class="fas fa-arrow-right"></i>
                 </button>
+
+                <div style="margin-top: 14px;">
+                    <button type="button" class="pill-action-btn" onclick="document.getElementById('standeeOpenBtn').click()" style="padding: 8px 18px; font-size: 13px; background: #FAF8F3; border-color: #DCD6CA;">
+                        <i class="fas fa-tree" style="color: #679436;"></i> 3D 情緒樹 ⇄ 像素花園 QR Code 生成器
+                    </button>
+                </div>
 
                 <div class="start-exhibition-hint">
                     <i class="fas fa-check-circle" style="color: #30D158;"></i> 展覽現場支援手機一鍵掃碼 · 產出專屬拍立得卡片
@@ -283,48 +289,88 @@
     </main>
 
     <!-- ───────────────────────────────────────────────
-         3. 展覽桌上立牌固定 QR Code 列印彈窗 (Exhibition Standee Modal)
+         3. 3D 情緒樹 ⇄ 像素花園 QR Code 互動生成器 & 展場立牌彈窗
          ─────────────────────────────────────────────── -->
     <div class="standee-modal-backdrop" id="standeeModal">
-        <div class="standee-modal-box">
+        <div class="standee-modal-box tree-qr-studio-box">
             <button class="standee-modal-close" id="standeeCloseBtn" title="關閉">
                 <i class="fas fa-times"></i>
             </button>
 
-            <!-- 可直接列印之立牌紙張本體 -->
-            <div class="standee-printable-paper" id="standeePrintPaper">
-                <div class="standee-paper-header">
+            <!-- 互動 3D 小樹 ⇄ 像素花園 QR Code 主舞台 (還原參考圖極簡米白風格) -->
+            <div class="tree-qr-stage-wrapper" id="standeePrintPaper">
+                <!-- 列印立牌時顯示之頂部品牌標題 (螢幕預覽時精簡優雅) -->
+                <div class="tree-qr-print-only-header">
                     <img src="assets/icon.png" alt="MapMo Logo" class="standee-logo-img">
-                    <span class="standee-brand-text">MapMo</span>
+                    <span class="standee-brand-text">MapMo · 社群習慣心理測驗</span>
                 </div>
 
-                <h2 class="standee-main-heading">社群習慣心理測驗</h2>
-                <p class="standee-sub-heading">4 題測出你在社群宇宙的隱藏人格 · 尋找你的心靈避風港</p>
-
-                <div class="standee-qr-frame">
-                    <div class="standee-qr-canvas-holder" id="standeeQrHolder">
-                        <!-- 高解析 QR Code 畫布 -->
-                    </div>
+                <!-- 3D 等距小樹 / 2D 像素花園 QR 互動畫布 -->
+                <div class="tree-qr-canvas-container" id="treeQrCanvasContainer" title="點擊切換 3D 小樹與 QR Code">
+                    <canvas id="treeQrInteractiveCanvas" width="520" height="520"></canvas>
                 </div>
 
-                <div class="standee-scan-guidance">
-                    <i class="fas fa-mobile-alt"></i> 打開手機相機 · 對準 QR Code 立即參與現場互動
+                <!-- 輕觸切換提示膠囊 (Tap the tree to see QR code / Tap to see the tree) -->
+                <div class="tree-qr-hint-row">
+                    <button type="button" class="tree-qr-toggle-pill" id="treeQrTogglePill">
+                        Tap the tree to see QR code · 點擊小樹顯示 QR Code
+                    </button>
                 </div>
-                <div class="standee-url-caption" id="standeeUrlCaption">https://chen1an.github.io/mapmo-quiz/</div>
 
-                <div class="standee-footer-credit">
-                    展覽現場專屬互動 · MapMo 全匿名地理情緒樹洞團隊
+                <!-- 固定網址輸入列 + 棕色下載按鈕 -->
+                <div class="tree-qr-url-row">
+                    <input
+                        type="text"
+                        id="treeQrUrlInput"
+                        class="tree-qr-url-input"
+                        value="https://chen1an.github.io/mapmo-quiz/"
+                        spellcheck="false"
+                        aria-label="QR Code URL"
+                    />
+                    <button type="button" class="tree-qr-download-btn" id="btnDownloadQR" title="下載高解析像素花園 QR Code 圖檔">
+                        <i class="fas fa-download"></i>
+                    </button>
                 </div>
-            </div>
 
-            <!-- 立牌操作按鈕列 (列印時會自動隱藏) -->
-            <div class="standee-modal-actions">
-                <button class="start-btn-primary" id="btnPrintStandee" style="max-width: 200px;">
-                    <i class="fas fa-print"></i> 直接列印此立牌
-                </button>
-                <button class="pill-action-btn" id="btnDownloadQR" style="padding: 14px 20px; font-size: 15px;">
-                    <i class="fas fa-arrow-down"></i> 下載純 QR Code
-                </button>
+                <!-- 季節切換列 (Spring / Summer / Autumn + 音效開關) -->
+                <div class="tree-qr-season-row">
+                    <button type="button" class="tree-season-btn active" data-season="spring">
+                        <i class="fas fa-spa"></i> Spring
+                    </button>
+                    <button type="button" class="tree-season-btn" data-season="summer">
+                        <i class="fas fa-sun"></i> Summer
+                    </button>
+                    <button type="button" class="tree-season-btn" data-season="autumn">
+                        <i class="fas fa-leaf"></i> Autumn
+                    </button>
+                    <button type="button" class="tree-sound-btn" id="treeSoundToggleBtn" title="切換環境音效">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+
+                <!-- 6 色情緒調色盤圓點 (粉、紫、紅、黃、藍、灰) -->
+                <div class="tree-qr-Palette-row" id="treeQrPaletteRow">
+                    <button type="button" class="tree-color-dot active" data-color="pink" style="background: #E8999E;" title="櫻花粉 (樂)"></button>
+                    <button type="button" class="tree-color-dot" data-color="purple" style="background: #6D4CE6;" title="薰衣草紫 (推播)"></button>
+                    <button type="button" class="tree-color-dot" data-color="red" style="background: #C9352B;" title="楓葉紅 (怒)"></button>
+                    <button type="button" class="tree-color-dot" data-color="yellow" style="background: #E0A21B;" title="暖陽黃 (喜)"></button>
+                    <button type="button" class="tree-color-dot" data-color="blue" style="background: #4285F4;" title="晴空藍 (哀)"></button>
+                    <button type="button" class="tree-color-dot" data-color="grey" style="background: #D8DFE5;" title="靜謐霧白 (無)"></button>
+                </div>
+
+                <!-- 底部輔助操作：列印展場立牌 / 下載小樹海報 -->
+                <div class="tree-qr-extra-actions">
+                    <button type="button" class="tree-extra-btn" id="btnPrintStandee">
+                        <i class="fas fa-print"></i> 直接列印展場立牌
+                    </button>
+                    <button type="button" class="tree-extra-btn" id="btnDownloadTreeView">
+                        <i class="fas fa-tree"></i> 下載當前畫面圖檔
+                    </button>
+                </div>
+
+                <!-- 隱藏相容容器供既有邏輯引用 -->
+                <div id="standeeQrHolder" style="display: none;"></div>
+                <div id="standeeUrlCaption" style="display: none;">https://chen1an.github.io/mapmo-quiz/</div>
             </div>
         </div>
     </div>
@@ -343,7 +389,7 @@
     <script src="assets/vendor/qrcode.js?v=20261103_qr"></script>
 
     <!-- Quiz Engine Script -->
-    <script src="quiz.js?v=20261103_quiz_engine"></script>
+    <script src="quiz.js?v=20261115_tree_qr"></script>
 
 </body>
 

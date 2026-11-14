@@ -1107,6 +1107,247 @@ body.quiz-page {
   flex-wrap: wrap;
 }
 
+/* ─────────────────────────────────────────────────────────
+   3D 情緒樹 ⇄ 像素花園 QR Code 互動生成器樣式 (Louis Raille Style)
+   ───────────────────────────────────────────────────────── */
+.tree-qr-studio-box {
+  background: #F6F2EA !important;
+  max-width: 600px !important;
+  padding: 28px 28px 24px !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(28, 28, 30, 0.08);
+}
+
+.tree-qr-stage-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.tree-qr-print-only-header {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tree-qr-canvas-container {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  margin: 0 auto 4px;
+}
+
+#treeQrInteractiveCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tree-qr-hint-row {
+  margin-bottom: 14px;
+}
+
+.tree-qr-toggle-pill {
+  background: #FAF8F3;
+  border: 1px solid #E2DDD2;
+  color: #5C5852;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 99px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.tree-qr-toggle-pill:hover {
+  background: #FFFFFF;
+  color: #1C1C1E;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.tree-qr-url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 470px;
+  margin-bottom: 10px;
+}
+
+.tree-qr-url-input {
+  flex: 1;
+  height: 44px;
+  background: #FCFBF8;
+  border: 1.5px solid #B5B0A6;
+  border-radius: 11px;
+  padding: 0 14px;
+  font-family: var(--font-en), var(--font-main);
+  font-size: 14px;
+  font-weight: 600;
+  color: #2C2A28;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tree-qr-url-input:focus {
+  border-color: #9C6233;
+  box-shadow: 0 0 0 3px rgba(156, 98, 51, 0.14);
+}
+
+.tree-qr-download-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  background: #9C6233;
+  color: #FFFFFF;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(156, 98, 51, 0.25);
+  transition: all 0.2s ease;
+}
+
+.tree-qr-download-btn:hover {
+  background: #845026;
+  transform: translateY(-1px);
+}
+
+.tree-qr-season-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 470px;
+  margin-bottom: 14px;
+}
+
+.tree-season-btn {
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  background: #FAF8F3;
+  border: 1px solid #E5E0D5;
+  color: #4A4742;
+  font-family: var(--font-en), var(--font-main);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tree-season-btn.active {
+  background: #DFD9CE;
+  border-color: #CFC8BC;
+  color: #1C1C1E;
+  font-weight: 700;
+}
+
+.tree-season-btn:hover:not(.active) {
+  background: #EFECE4;
+}
+
+.tree-sound-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #FAF8F3;
+  border: 1px solid #E5E0D5;
+  color: #4A4742;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.tree-sound-btn:hover {
+  background: #EFECE4;
+}
+
+.tree-qr-Palette-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tree-color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tree-color-dot:hover {
+  transform: scale(1.14);
+}
+
+.tree-color-dot.active {
+  transform: scale(1.18);
+  border-color: #FFFFFF;
+  box-shadow: 0 0 0 2px #7A746B, 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tree-qr-extra-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 470px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.tree-extra-btn {
+  flex: 1;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #DED9CE;
+  color: #4A4742;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.tree-extra-btn:hover {
+  background: #FFFFFF;
+  color: #1C1C1E;
+  border-color: #B5B0A6;
+}
+
 /* Toast alert */
 .quiz-toast {
   position: fixed;
