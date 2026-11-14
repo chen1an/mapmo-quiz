@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>社群習慣心理測驗 - MapMo | 探索你的社群靈魂人格</title>
+    <meta name="description" content="你是潛水觀察派、備忘錄日記派、悄悄發佈派、精修完美派，還是隨心所欲派？4 題直覺快問快答，測出你在社群宇宙的真實樣貌與專屬避風港。">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+
+    <!-- Site Base Style -->
+    <link rel="stylesheet" href="style.css?v=20261103_quiz_base">
+
+    <!-- Dedicated Quiz Page CSS -->
+    <link rel="stylesheet" href="quiz.css?v=20261103_quiz_engine">
+</head>
+
+<body class="quiz-page">
+
+    <!-- 背景動態柔光光暈 (Ambient Orbs) -->
+    <div class="quiz-ambient-orb quiz-orb-1"></div>
+    <div class="quiz-ambient-orb quiz-orb-2"></div>
+    <div class="quiz-ambient-orb quiz-orb-3"></div>
+
+    <!-- 1. 吸頂導覽列 (Navbar - 獨立專題簡約導航，免除外連未完工介紹頁) -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container quiz-nav-standalone">
+            <div class="logo-box">
+                <div class="logo-avatar">
+                    <img src="assets/icon.png" alt="MapMo Logo" class="logo-img">
+                </div>
+                <img src="assets/logo-text.png" alt="MapMo" class="logo-text-img">
+                <span class="quiz-nav-badge">社群心理測驗</span>
+            </div>
+
+            <!-- 右側互動功能小膠囊群 -->
+            <div class="nav-actions-group">
+                <button class="pill-action-btn" id="standeeOpenBtn" title="開啟展覽桌上立牌與固定 QR Code 輸出介面">
+                    <i class="fas fa-qrcode"></i> 展場立牌 QR
+                </button>
+                <button class="pill-action-btn active" id="soundToggleBtn" title="切換互動音效">
+                    <i class="fas fa-volume-up"></i> 音效
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. 測驗主要互動區 (Main Interactive Wrapper) -->
+    <main class="quiz-main-wrapper">
+
+        <!-- ───────────────────────────────────────────────
+             SCREEN 1: START SCREEN (測驗啟航首頁)
+             ─────────────────────────────────────────────── -->
+        <section class="quiz-screen active" id="screenStart">
+            <div class="start-card">
+                <div class="start-header-badge">
+                    <span>✦ MAPMO PSYCHOLOGY INTERACTION ✦</span>
+                </div>
+
+                <div class="start-hero-avatar">
+                    <img src="assets/upload-character.gif" alt="MapMo 小精靈" class="start-avatar-img">
+                </div>
+
+                <h1 class="start-title">社群習慣心理測驗</h1>
+                <p class="start-subtitle">
+                    看到美好風景你會立刻按下快門嗎？發文前總是反覆糾結排版？<br>
+                    <strong>4 題直覺決策樹</strong>，精準探測你的真實社群靈魂人格！
+                </p>
+
+                <div class="start-chips-grid">
+                    <span class="start-chip"><i class="fas fa-user-secret" style="color: #6366F1;"></i> 潛伏觀察 vs 渴望共鳴</span>
+                    <span class="start-chip"><i class="fas fa-shield-alt" style="color: #FBBD04;"></i> 私密樹洞 vs 公開分享</span>
+                    <span class="start-chip"><i class="fas fa-magic" style="color: #F48FB1;"></i> 5 大真實社群性格派系</span>
+                </div>
+
+                <button class="start-btn-primary" id="startQuizBtn">
+                    開始探索社群人格 <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <div class="start-exhibition-hint">
+                    <i class="fas fa-check-circle" style="color: #30D158;"></i> 展覽現場支援手機一鍵掃碼 · 產出專屬拍立得卡片
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────
+             SCREEN 2: QUIZ STEPS SCREEN (決策樹動態問答卡)
+             ─────────────────────────────────────────────── -->
+        <section class="quiz-screen" id="screenQuiz">
+            <div class="quiz-step-card">
+                <!-- 頂部進度條 -->
+                <div class="quiz-progress-bar-wrap">
+                    <div class="quiz-progress-bar-fill" id="qProgressFill"></div>
+                </div>
+
+                <!-- 頂部控制列 (返回 + 步驟標籤) -->
+                <div class="quiz-nav-top-row">
+                    <button class="quiz-back-btn" id="qBackBtn">
+                        <i class="fas fa-arrow-left"></i> 回上一題
+                    </button>
+                    <span class="quiz-step-indicator" id="qStepIndicator">Q1 / 4</span>
+                </div>
+
+                <!-- 實時決策樹路徑追蹤 (Decision Breadcrumbs) -->
+                <div class="quiz-decision-path-tracker" id="qBreadcrumbTracker">
+                    <!-- 動態由 JavaScript 生成 -->
+                </div>
+
+                <!-- 題目核心區 -->
+                <div class="question-category-tag" id="qCategoryTag">Step 01 · 紀錄習慣</div>
+                <h2 class="question-prompt-text" id="qPromptText">
+                    看到喜歡的風景、美食或日常瞬間，你習慣隨手拍照把它記下來嗎？
+                </h2>
+
+                <!-- 選項按鈕區 -->
+                <div class="quiz-options-container" id="qOptionsContainer">
+                    <!-- 動態由 JavaScript 生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────
+             SCREEN 3: ANALYZING SCREEN (心理演算過渡)
+             ─────────────────────────────────────────────── -->
+        <section class="quiz-screen" id="screenAnalyzing">
+            <div class="quiz-analyzing-card">
+                <div class="analyzing-character-box">
+                    <img src="assets/upload-character.gif" alt="MapMo 正在計算中" class="analyzing-character-gif">
+                </div>
+                <h3 class="analyzing-title">正在解析您的社群心理軌跡...</h3>
+                <p class="analyzing-subtext" id="analyzingSubtext">正在比對 5 大社群性格光譜...</p>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────
+             SCREEN 4: RESULT SCREEN (拍立得卡片與專屬功能解鎖)
+             ─────────────────────────────────────────────── -->
+        <section class="quiz-screen" id="screenResult">
+            <div class="result-screen-container">
+
+                <!-- 拍立得風格核心成果卡片 (可匯出為高清社群圖) -->
+                <div class="polaroid-export-target" id="polaroidExportTarget">
+                    <!-- 頂部紙膠帶造型裝飾 -->
+                    <div class="polaroid-tape-graphic"></div>
+
+                    <!-- 拍立得頂部 Header -->
+                    <div class="polaroid-top-bar">
+                        <div class="polaroid-brand-tag">
+                            <img src="assets/icon.png" alt="MapMo" class="polaroid-logo-img">
+                            <span class="polaroid-brand-name">MAPMO PSYCHOLOGY ARCHIVE</span>
+                        </div>
+                        <span class="polaroid-serial" id="polaroidSerial">NO. MAPMO-8821</span>
+                    </div>
+
+                    <!-- 派系核心英雄區 -->
+                    <div class="persona-hero-box">
+                        <div class="persona-badge-pill" id="personaBadgePill">
+                            <i class="fas fa-sparkles"></i> 哀 · 靜謐思緒
+                        </div>
+                        <h2 class="persona-main-title" id="personaMainTitle">｜潛水觀察派｜</h2>
+                        <div class="persona-tagline-quote" id="personaTagline">靜默漫遊的城市觀察者</div>
+                    </div>
+
+                    <!-- 靈魂金句色塊 -->
+                    <div class="persona-soul-quote-box" id="personaSoulQuoteBox">
+                        <div class="soul-quote-label">✦ 靈魂金句 ✦</div>
+                        <div class="soul-quote-text" id="personaSoulQuote">
+                            「我不在社群大聲喧嘩，但我比誰都細膩地閱讀著這座城市的喜怒哀樂。」
+                        </div>
+                    </div>
+
+                    <!-- 社群現狀剖析 -->
+                    <div class="persona-status-box">
+                        <div class="status-box-header">
+                            <i class="fas fa-fingerprint" style="color: #6366F1;"></i> 社群現狀剖析
+                        </div>
+                        <div class="status-box-body" id="personaStatusText">
+                            沒有特別習慣紀錄生活，但是喜歡看熟人或陌生人紀錄的生活。
+                        </div>
+                    </div>
+
+                    <!-- 隱藏性格解析 -->
+                    <div class="persona-status-box" style="background: #FAF9F6;">
+                        <div class="status-box-header">
+                            <i class="fas fa-lightbulb" style="color: #FBBD04;"></i> 隱藏性格盲點與渴望
+                        </div>
+                        <div class="status-box-body" id="personaInsightText">
+                            你是最溫柔的城市讀者。比起自己發文成為焦點，你更享受在無壓力的角落默默看著熟人與陌生人的生活切片。
+                        </div>
+                    </div>
+
+                    <!-- 三維社群能量指數 -->
+                    <div class="persona-energy-dimensions">
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span id="dimRecordLabel">紀錄生活熱情</span>
+                                <span id="dimRecordVal" style="color: #4285F4; font-weight: 800;">18%</span>
+                            </div>
+                            <div class="dimension-track">
+                                <div class="dimension-fill" id="dimRecordFill" style="width: 18%; background: #4285F4;"></div>
+                            </div>
+                        </div>
+
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span id="dimAwarenessLabel">他人眼光敏感度</span>
+                                <span id="dimAwarenessVal" style="color: #EA4335; font-weight: 800;">20%</span>
+                            </div>
+                            <div class="dimension-track">
+                                <div class="dimension-fill" id="dimAwarenessFill" style="width: 20%; background: #EA4335;"></div>
+                            </div>
+                        </div>
+
+                        <div class="dimension-item">
+                            <div class="dimension-header">
+                                <span id="dimShareLabel">公開分享欲求</span>
+                                <span id="dimShareVal" style="color: #6366F1; font-weight: 800;">12%</span>
+                            </div>
+                            <div class="dimension-track">
+                                <div class="dimension-fill" id="dimShareFill" style="width: 12%; background: #6366F1;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最適合的 MapMo 專屬功能 -->
+                    <div class="persona-features-section">
+                        <div class="features-sec-title">
+                            <i class="fas fa-compass" style="color: #6366F1;"></i> 為你推薦的 MapMo 專屬功能解鎖
+                        </div>
+                        <div class="features-grid-stack" id="personaFeaturesList">
+                            <!-- 動態注入主要適合與次要推薦卡片 -->
+                        </div>
+                    </div>
+
+                    <!-- 底部掃描與專屬 QR Code (分享時朋友可直接掃描) -->
+                    <div class="polaroid-card-footer">
+                        <div class="card-footer-info">
+                            <div class="card-footer-title">MapMo 城市情緒樹洞</div>
+                            <div class="card-footer-sub">掃描 QR Code · 測測你的社群人格</div>
+                        </div>
+                        <div class="card-footer-qr-box" id="cardFooterQrHolder">
+                            <!-- 動態生成 QR Code -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 互動操作按鈕列 (Action Toolbar) -->
+                <div class="result-action-toolbar">
+                    <div class="action-row-buttons">
+                        <button class="btn-result-action primary" id="btnDownloadResultImg">
+                            <i class="fas fa-download"></i> 下載專屬結果美圖 (IG/列印)
+                        </button>
+                        <button class="btn-result-action secondary" id="btnCopyQuizLink">
+                            <i class="fas fa-share-alt"></i> 複製測驗連結分享
+                        </button>
+                    </div>
+
+                    <div class="action-row-buttons">
+                        <button class="btn-result-action secondary" id="btnRestartQuiz">
+                            <i class="fas fa-redo-alt"></i> 重新測驗
+                        </button>
+                        <button class="btn-result-action secondary" onclick="document.getElementById('standeeOpenBtn').click()">
+                            <i class="fas fa-qrcode"></i> 展覽立牌 QR Code
+                        </button>
+                    </div>
+
+                    <button class="btn-result-action tertiary" onclick="document.getElementById('standeeOpenBtn').click()">
+                        <i class="fas fa-print"></i> 需要在展覽現場印出立牌？開啟展場專用 QR Code 列印面版
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ───────────────────────────────────────────────
+         3. 展覽桌上立牌固定 QR Code 列印彈窗 (Exhibition Standee Modal)
+         ─────────────────────────────────────────────── -->
+    <div class="standee-modal-backdrop" id="standeeModal">
+        <div class="standee-modal-box">
+            <button class="standee-modal-close" id="standeeCloseBtn" title="關閉">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- 可直接列印之立牌紙張本體 -->
+            <div class="standee-printable-paper" id="standeePrintPaper">
+                <div class="standee-paper-header">
+                    <img src="assets/icon.png" alt="MapMo Logo" class="standee-logo-img">
+                    <span class="standee-brand-text">MapMo</span>
+                </div>
+
+                <h2 class="standee-main-heading">社群習慣心理測驗</h2>
+                <p class="standee-sub-heading">4 題測出你在社群宇宙的隱藏人格 · 尋找你的心靈避風港</p>
+
+                <div class="standee-qr-frame">
+                    <div class="standee-qr-canvas-holder" id="standeeQrHolder">
+                        <!-- 高解析 QR Code 畫布 -->
+                    </div>
+                </div>
+
+                <div class="standee-scan-guidance">
+                    <i class="fas fa-mobile-alt"></i> 打開手機相機 · 對準 QR Code 立即參與現場互動
+                </div>
+                <div class="standee-url-caption" id="standeeUrlCaption">https://chen1an.github.io/mapmo-quiz/</div>
+
+                <div class="standee-footer-credit">
+                    展覽現場專屬互動 · MapMo 全匿名地理情緒樹洞團隊
+                </div>
+            </div>
+
+            <!-- 立牌操作按鈕列 (列印時會自動隱藏) -->
+            <div class="standee-modal-actions">
+                <button class="start-btn-primary" id="btnPrintStandee" style="max-width: 200px;">
+                    <i class="fas fa-print"></i> 直接列印此立牌
+                </button>
+                <button class="pill-action-btn" id="btnDownloadQR" style="padding: 14px 20px; font-size: 15px;">
+                    <i class="fas fa-arrow-down"></i> 下載純 QR Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 底部版權宣告 (Footer - 獨立專題) -->
+    <footer class="footer" style="margin-top: auto; padding: 32px 20px; text-align: center; border-top: 1px solid rgba(0,0,0,0.06); background: rgba(250, 249, 246, 0.8);">
+        <p style="font-size: 13px; color: #8E8E93; margin-bottom: 6px;">
+            © 2026 MapMo. All rights reserved. · 全匿名地理情緒樹洞
+        </p>
+        <p style="font-size: 12px; color: #AEAEB2;">
+            展覽現場專屬互動 · 社群習慣心理測驗
+        </p>
+    </footer>
+
+    <!-- Standalone QR Code Generator -->
+    <script src="assets/vendor/qrcode.js?v=20261103_qr"></script>
+
+    <!-- Quiz Engine Script -->
+    <script src="quiz.js?v=20261103_quiz_engine"></script>
+
+</body>
+
+</html>
+
