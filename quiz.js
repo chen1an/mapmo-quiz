@@ -954,17 +954,20 @@
     }
   };
 
-  // 8 個真實大樹分枝樹冠團塊 (Multi-Tiered Canopy Boughs)
-  // 每一個團塊都精準對應一條從主幹伸出的 3D 分枝，創造高挺樹幹 + 蓬鬆分層大樹剪影
+  // 11 個連貫交疊、有機錯落的大樹冠分枝團塊 (Canopy Boughs)
+  // 左右不對稱自然伸展、中心濃密遮蔭、上聳下寬，呈現真實參天大樹剪影
   const TREE_BOUGHS = [
-    { u: -0.05, v: -0.05, h: 256, rx: 0.25, ry: 0.25, rh: 28, branchStartH: 132, branchW: 5.5 }, // 0: 高聳樹頂尖峰
-    { u: -0.28, v: 0.04,  h: 214, rx: 0.30, ry: 0.27, rh: 26, branchStartH: 122, branchW: 6.0 }, // 1: 左上中高冠
-    { u: 0.16,  v: -0.28, h: 218, rx: 0.30, ry: 0.27, rh: 26, branchStartH: 122, branchW: 6.0 }, // 2: 右上中高冠
-    { u: -0.34, v: -0.36, h: 178, rx: 0.35, ry: 0.33, rh: 26, branchStartH: 108, branchW: 6.5 }, // 3: 正後方襯底大冠
-    { u: -0.60, v: 0.28,  h: 144, rx: 0.34, ry: 0.31, rh: 24, branchStartH: 92,  branchW: 7.2 }, // 4: 左側寬大展開翼 (橫跨左側島嶼)
-    { u: 0.50,  v: -0.54, h: 148, rx: 0.34, ry: 0.31, rh: 24, branchStartH: 94,  branchW: 7.2 }, // 5: 右側寬大展開翼 (橫跨右側島嶼)
-    { u: -0.18, v: 0.44,  h: 164, rx: 0.28, ry: 0.26, rh: 22, branchStartH: 105, branchW: 5.8 }, // 6: 左前高挑分枝冠
-    { u: 0.44,  v: 0.10,  h: 160, rx: 0.28, ry: 0.26, rh: 22, branchStartH: 105, branchW: 5.8 }  // 7: 右前高挑分枝冠
+    { u: -0.05, v: -0.05, h: 254, rx: 0.34, ry: 0.34, rh: 34, drawBranch: false }, // 0: 樹頂主峰冠冕
+    { u: -0.28, v: 0.04,  h: 214, rx: 0.38, ry: 0.35, rh: 32, branchStartH: 102, branchW: 6.5, branchEndFrac: 0.56, drawBranch: true }, // 1: 上左主冠
+    { u: 0.16,  v: -0.26, h: 222, rx: 0.38, ry: 0.35, rh: 32, branchStartH: 104, branchW: 6.5, branchEndFrac: 0.56, drawBranch: true }, // 2: 上右主冠
+    { u: -0.34, v: -0.34, h: 184, rx: 0.44, ry: 0.42, rh: 32, drawBranch: false }, // 3: 後方濃密背光核心
+    { u: -0.04, v: -0.04, h: 188, rx: 0.42, ry: 0.40, rh: 32, drawBranch: false }, // 4: 中央遮蔭樹心層 (填補樹冠中央過空縫隙)
+    { u: -0.68, v: 0.32,  h: 138, rx: 0.38, ry: 0.36, rh: 30, branchStartH: 82,  branchW: 8.5, branchEndFrac: 0.72, drawBranch: true }, // 5: 左側寬闊伸展大翼
+    { u: 0.58,  v: -0.60, h: 146, rx: 0.38, ry: 0.36, rh: 30, branchStartH: 86,  branchW: 8.5, branchEndFrac: 0.72, drawBranch: true }, // 6: 右側寬闊伸展大翼
+    { u: -0.40, v: 0.24,  h: 166, rx: 0.36, ry: 0.34, rh: 28, drawBranch: false }, // 7: 中左橋接冠
+    { u: 0.36,  v: -0.24, h: 174, rx: 0.36, ry: 0.34, rh: 28, drawBranch: false }, // 8: 中右橋接冠
+    { u: -0.22, v: 0.48,  h: 148, rx: 0.32, ry: 0.30, rh: 26, branchStartH: 94,  branchW: 6.2, branchEndFrac: 0.62, drawBranch: true }, // 9: 左前自然垂枝 (不對稱較低)
+    { u: 0.48,  v: 0.06,  h: 162, rx: 0.32, ry: 0.30, rh: 26, drawBranch: false }  // 10: 右前較高層冠 (錯落高度不死板對稱)
   ];
 
   let treeQrState = {
@@ -1075,29 +1078,30 @@
             let treeV = bough.v + dy * bough.ry;
             let treeH = bough.h + dz * bough.rh;
 
-            // 絕對淨空保護門檻 (Trunk Corridor Guard)：確保正前方與中央樹幹區域 (u+v > -0.15, |u-v| < 0.35)
-            // 不會出現遮擋主幹的低垂葉片，讓樹幹與 Y 型分枝始終清晰立體！
+            // 絕對淨空保護門檻 (Trunk Corridor Guard)：確保正前方與中央樹幹區域
+            // 不會出現遮擋主幹的低垂葉片，同時讓左右垂枝自然展開！
             const frontness = treeU + treeV;
             const lateral = Math.abs(treeU - treeV);
-            if (frontness > -0.12 && lateral < 0.38 && treeH < 142) {
-              treeH = 144 + hash2D(gr, gc, 37) * 28;
+            if (frontness > -0.15 && lateral < 0.36 && treeH < 126) {
+              treeH = 128 + hash2D(gr, gc, 37) * 28;
             }
 
             // 以左上受光面與高度算出局部立體明暗階層 (每團樹冠底部較深、外緣頂端明亮)
-            const localLight = dz * 0.55 - (dx + dy) * 0.32 + (treeH - 135) / 145 * 0.42 + (hash2D(gr, gc, 41) - 0.5) * 0.25;
-            const shadeIdx = Math.max(0, Math.min(4, Math.floor((localLight + 0.55) * 3.8)));
+            const localLight = dz * 0.58 - (dx + dy) * 0.34 + (treeH - 125) / 145 * 0.42 + (hash2D(gr, gc, 41) - 0.5) * 0.22;
+            const shadeIdx = Math.max(0, Math.min(4, Math.floor((localLight + 0.55) * 3.85)));
 
-            // 精緻像素小葉尺寸 (避免 1,400+ 片糊成實心水泥球，保留透氣邊緣感)
-            const leafW = 6.2 + hash2D(gr, gc, 53) * 4.4;
-            const leafH = 4.5 + hash2D(gr, gc, 61) * 3.2;
+            // 豐盈且富像素顆粒感的樹葉比例，構成連貫蓬鬆的大樹葉雲
+            const leafW = 7.6 + hash2D(gr, gc, 53) * 4.6;
+            const leafH = 5.5 + hash2D(gr, gc, 61) * 3.4;
             const delay = hash2D(gr, gc, 71) * 0.28;
             const swirlSign = hash2D(gr, gc, 83) > 0.5 ? 1 : -1;
             const depth = treeU + treeV;
+            const isBehindTrunk = (depth < -0.14 && treeH < 182);
 
             particles.push({
               r, c, sr, sc, gr, gc,
               u0, v0, u1, v1, qrU, qrV,
-              treeU, treeV, treeH, depth,
+              treeU, treeV, treeH, depth, isBehindTrunk,
               shadeIdx, leafW, leafH,
               delay, swirlSign,
               seed: idx
@@ -1107,8 +1111,8 @@
       }
     }
 
-    // 預先依 3D 等距深度排序：遠處背面葉片在前、前側葉片在後，配合 Painter's Algorithm 與樹幹分層
-    particles.sort((a, b) => (a.depth * 100 + a.treeH * 0.14) - (b.depth * 100 + b.treeH * 0.14));
+    // 預先依 3D 等距深度排序：遠處背面葉片在前、前側高冠在後
+    particles.sort((a, b) => (a.depth * 100 + a.treeH * 0.22) - (b.depth * 100 + b.treeH * 0.22));
     treeQrState.leafParticles = particles;
   }
 
@@ -1205,11 +1209,11 @@
     return palette.qrTiles[cIdx];
   }
 
-  // 繪製 3D 立體樹幹與連接至 8 團樹冠中心的真實空間樹枝
+  // 繪製 3D 立體樹幹與向上托起 11 團樹冠腹部的真實空間樹枝
   function drawTrunkAndBranches3D(ctx, project, treeScale) {
     const trunkBase = project(0, 0, 0);
-    const trunkMid = project(0, 0, 72 * treeScale);
-    const trunkTop = project(0, 0, 146 * treeScale);
+    const trunkMid = project(0, 0, 58 * treeScale);
+    const trunkTop = project(0, 0, 114 * treeScale);
 
     // 1. 樹幹根部微微抓地寬座與樹影
     ctx.fillStyle = 'rgba(62, 38, 24, 0.22)';
@@ -1220,10 +1224,10 @@
     // 2. 主幹深色背光陰影面
     ctx.fillStyle = '#3B2315';
     ctx.beginPath();
-    ctx.moveTo(trunkBase.x - 20 * treeScale, trunkBase.y + 3 * treeScale);
-    ctx.quadraticCurveTo(trunkMid.x - 11 * treeScale, trunkMid.y, trunkTop.x - 7 * treeScale, trunkTop.y);
-    ctx.lineTo(trunkTop.x + 8 * treeScale, trunkTop.y);
-    ctx.quadraticCurveTo(trunkMid.x + 12 * treeScale, trunkMid.y, trunkBase.x + 21 * treeScale, trunkBase.y + 3 * treeScale);
+    ctx.moveTo(trunkBase.x - 21 * treeScale, trunkBase.y + 3 * treeScale);
+    ctx.quadraticCurveTo(trunkMid.x - 12 * treeScale, trunkMid.y, trunkTop.x - 8 * treeScale, trunkTop.y);
+    ctx.lineTo(trunkTop.x + 9 * treeScale, trunkTop.y);
+    ctx.quadraticCurveTo(trunkMid.x + 13 * treeScale, trunkMid.y, trunkBase.x + 22 * treeScale, trunkBase.y + 3 * treeScale);
     ctx.closePath();
     ctx.fill();
 
@@ -1232,19 +1236,20 @@
     ctx.beginPath();
     ctx.moveTo(trunkBase.x - 6 * treeScale, trunkBase.y + 2 * treeScale);
     ctx.quadraticCurveTo(trunkMid.x - 3 * treeScale, trunkMid.y, trunkTop.x - 2 * treeScale, trunkTop.y);
-    ctx.lineTo(trunkTop.x + 7 * treeScale, trunkTop.y);
-    ctx.quadraticCurveTo(trunkMid.x + 10 * treeScale, trunkMid.y, trunkBase.x + 13 * treeScale, trunkBase.y + 2 * treeScale);
+    ctx.lineTo(trunkTop.x + 8 * treeScale, trunkTop.y);
+    ctx.quadraticCurveTo(trunkMid.x + 11 * treeScale, trunkMid.y, trunkBase.x + 13 * treeScale, trunkBase.y + 2 * treeScale);
     ctx.closePath();
     ctx.fill();
 
-    // 4. 連接至 8 個分枝冠團中心的真實 3D 空間樹枝
+    // 4. 繪製 5 條自然蒼勁的主幹分枝（避免過多平行細直線條顯得凌亂）
     ctx.lineCap = 'round';
     TREE_BOUGHS.forEach((b, bIdx) => {
+      if (!b.drawBranch) return;
+      const frac = b.branchEndFrac || 0.65;
       const startPt = project(0, 0, b.branchStartH * treeScale);
-      const endPt = project(b.u * 0.78 * treeScale, b.v * 0.78 * treeScale, (b.h - 14) * treeScale);
-      const ctrlPt = project(b.u * 0.35 * treeScale, b.v * 0.35 * treeScale, (b.branchStartH + (b.h - b.branchStartH) * 0.6) * treeScale);
+      const endPt = project(b.u * frac * treeScale, b.v * frac * treeScale, (b.h - 26) * treeScale);
+      const ctrlPt = project(b.u * frac * 0.45 * treeScale, b.v * frac * 0.45 * treeScale, (b.branchStartH + (b.h - 26 - b.branchStartH) * 0.45) * treeScale);
 
-      // 外側深色枝條輪廓
       ctx.strokeStyle = '#3E2517';
       ctx.lineWidth = b.branchW * treeScale;
       ctx.beginPath();
@@ -1252,10 +1257,9 @@
       ctx.quadraticCurveTo(ctrlPt.x, ctrlPt.y, endPt.x, endPt.y);
       ctx.stroke();
 
-      // 內側受光棕木亮線
-      if (bIdx >= 4) {
+      if (bIdx >= 5) {
         ctx.strokeStyle = '#5E3B27';
-        ctx.lineWidth = (b.branchW * 0.45) * treeScale;
+        ctx.lineWidth = (b.branchW * 0.42) * treeScale;
         ctx.beginPath();
         ctx.moveTo(startPt.x + 1, startPt.y - 1);
         ctx.quadraticCurveTo(ctrlPt.x + 1, ctrlPt.y - 1, endPt.x + 1, endPt.y - 1);
@@ -1511,18 +1515,23 @@
     };
 
     if (p < 0.98) {
+      // Pass A: 先繪製樹幹與枝條後方低層的背光葉簇
       for (let i = 0; i < orderedLeaves.length; i++) {
-        const lp = orderedLeaves[i];
-        if (!trunkDrawn && lp.depth >= 0.04) {
-          trunkDrawn = true;
-          if (treeScale > 0.01) {
-            ctx.save();
-            ctx.globalAlpha = Math.min(1, treeScale * 1.15);
-            drawTrunkAndBranches3D(ctx, project, treeScale);
-            ctx.restore();
-          }
-        }
-        drawLeaf(lp);
+        if (orderedLeaves[i].isBehindTrunk) drawLeaf(orderedLeaves[i]);
+      }
+
+      // Pass B: 繪製立體 3D 樹幹與分叉大樹枝
+      if (treeScale > 0.01) {
+        trunkDrawn = true;
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, treeScale * 1.15);
+        drawTrunkAndBranches3D(ctx, project, treeScale);
+        ctx.restore();
+      }
+
+      // Pass C: 繪製前側垂枝與高聳蓬鬆頂層樹冠（自然包覆並遮蓋枝幹末端）
+      for (let i = 0; i < orderedLeaves.length; i++) {
+        if (!orderedLeaves[i].isBehindTrunk) drawLeaf(orderedLeaves[i]);
       }
     }
 
