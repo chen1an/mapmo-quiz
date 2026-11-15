@@ -594,6 +594,12 @@
       });
     }
 
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && standeeModal && standeeModal.classList.contains('open')) {
+        closeStandeeModal();
+      }
+    });
+
     // 立牌直接列印
     const btnPrintStandee = document.getElementById('btnPrintStandee');
     if (btnPrintStandee) {

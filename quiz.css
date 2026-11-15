@@ -45,10 +45,19 @@ body.quiz-page {
   font-family: var(--font-tw);
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+@media (max-width: 1024px), (pointer: coarse) {
+  body.quiz-page {
+    background-attachment: scroll;
+  }
 }
 
 /* Standalone Dedicated Navbar */
@@ -56,10 +65,11 @@ body.quiz-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding-inline: max(clamp(12px, 3vw, 20px), env(safe-area-inset-left, 0px)) max(clamp(12px, 3vw, 20px), env(safe-area-inset-right, 0px));
   height: var(--nav-height);
   box-sizing: border-box;
 }
@@ -122,8 +132,9 @@ body.quiz-page {
   flex: 1;
   max-width: 860px;
   width: 100%;
-  margin: calc(var(--nav-height) + 24px) auto 60px;
-  padding: 0 20px;
+  margin: calc(var(--nav-height) + env(safe-area-inset-top, 0px) + clamp(12px, 2.5vw, 24px)) auto clamp(36px, 5vw, 60px);
+  padding-inline: max(clamp(14px, 3vw, 20px), env(safe-area-inset-left, 0px)) max(clamp(14px, 3vw, 20px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -975,7 +986,9 @@ body.quiz-page {
   max-width: 680px;
   width: 100%;
   max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
   padding: 32px;
   position: relative;
@@ -986,6 +999,7 @@ body.quiz-page {
   position: absolute;
   top: 20px;
   right: 20px;
+  z-index: 30;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -998,6 +1012,12 @@ body.quiz-page {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.standee-modal-close::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
 
 .standee-modal-close:hover {
@@ -1186,6 +1206,7 @@ body.quiz-page {
 
 .tree-qr-url-input {
   flex: 1;
+  min-width: 0;
   height: 44px;
   background: #FCFBF8;
   border: 1.5px solid #B5B0A6;
@@ -1376,12 +1397,42 @@ body.quiz-page {
 /* ─────────────────────────────────────────────────────────
    8. Responsive Media Queries
    ───────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .pill-action-btn,
+  .quiz-back-btn,
+  .quiz-option-btn,
+  .btn-result-action,
+  .tree-qr-toggle-pill,
+  .tree-season-btn,
+  .tree-sound-btn,
+  .tree-extra-btn {
+    min-block-size: var(--target-size, 44px);
+  }
+  .tree-sound-btn {
+    min-inline-size: var(--target-size, 44px);
+    height: var(--target-size, 44px);
+  }
+  .quiz-option-btn:hover,
+  .start-btn-primary:hover,
+  .btn-result-action.primary:hover,
+  .btn-result-action.secondary:hover,
+  .pill-action-btn:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .quiz-main-wrapper {
+    max-width: 720px;
+  }
+}
+
 @media (max-width: 768px) {
   .nav-links.active,
   .nav-links.open {
     display: flex !important;
-    position: absolute;
-    top: var(--nav-height);
+    position: fixed;
+    top: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
     left: 0;
     width: 100%;
     background: rgba(250, 249, 246, 0.98);
@@ -1400,62 +1451,112 @@ body.quiz-page {
   }
 
   .pill-action-btn {
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    white-space: nowrap;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .quiz-nav-badge {
     display: none;
   }
 
   .quiz-nav-standalone {
-    padding: 0 12px;
+    padding-inline: max(12px, env(safe-area-inset-left, 0px)) max(12px, env(safe-area-inset-right, 0px));
   }
 
-  .quiz-main-wrapper {
-    margin-top: calc(var(--nav-height) + 12px);
-    padding: 0 16px;
+  .logo-avatar {
+    width: 32px;
+    height: 32px;
   }
-  
+
+  .logo-text-img {
+    height: 20px;
+  }
+
   .start-card,
   .quiz-step-card,
   .polaroid-export-target {
-    padding: 28px 20px;
+    padding: clamp(22px, 5vw, 28px) clamp(16px, 4.5vw, 22px);
+    border-radius: 22px;
   }
-  
+
+  .quiz-analyzing-card {
+    padding: 42px 20px;
+    border-radius: 22px;
+  }
+
   .start-title {
-    font-size: 26px;
+    font-size: clamp(24px, 7vw, 28px);
   }
-  
+
   .question-prompt-text {
-    font-size: 20px;
+    font-size: clamp(19px, 5.4vw, 22px);
+    margin-bottom: 22px;
   }
-  
+
   .quiz-option-btn {
-    padding: 16px 18px;
+    padding: 15px 16px;
   }
-  
+
+  .quiz-option-text {
+    font-size: 15px;
+  }
+
   .action-row-buttons {
     grid-template-columns: 1fr;
   }
-  
+
   .persona-main-title {
-    font-size: 30px;
+    font-size: clamp(26px, 7.5vw, 32px);
   }
-  
-  .standee-modal-box {
-    padding: 24px 16px;
+
+  .polaroid-card-footer {
+    gap: 12px;
   }
-  
+
+  .standee-modal-backdrop {
+    padding: 12px;
+  }
+
+  .standee-modal-box,
+  .tree-qr-studio-box {
+    padding: 56px 16px 20px !important;
+    border-radius: 24px !important;
+  }
+
+  .standee-modal-close {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    z-index: 30;
+  }
+
   .standee-printable-paper {
-    padding: 28px 16px;
+    padding: 24px 14px;
   }
-  
+
   .standee-qr-canvas-holder {
     width: 180px;
     height: 180px;
+  }
+
+  .tree-qr-season-row,
+  .tree-qr-extra-actions {
+    flex-wrap: wrap;
+  }
+
+  .tree-season-btn {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+@media (max-width: 390px) {
+  .pill-action-btn {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 

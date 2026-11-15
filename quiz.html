@@ -3,11 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>社群習慣心理測驗 - MapMo | 探索你的社群靈魂人格</title>
+    <link rel="icon" type="image/png" href="assets/icon.png">
     <meta name="description" content="你是潛水觀察派、備忘錄日記派、悄悄發佈派、精修完美派，還是隨心所欲派？4 題直覺快問快答，測出你在社群宇宙的真實樣貌與專屬避風港。">
 
     <!-- Google Fonts -->
@@ -21,10 +22,10 @@
     <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 
     <!-- Site Base Style -->
-    <link rel="stylesheet" href="style.css?v=20261103_quiz_base">
+    <link rel="stylesheet" href="style.css?v=20261116_rwd">
 
     <!-- Dedicated Quiz Page CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261115_tree_qr">
+    <link rel="stylesheet" href="quiz.css?v=20261116_rwd">
 </head>
 
 <body class="quiz-page">
@@ -293,8 +294,8 @@
          ─────────────────────────────────────────────── -->
     <div class="standee-modal-backdrop" id="standeeModal">
         <div class="standee-modal-box tree-qr-studio-box">
-            <button class="standee-modal-close" id="standeeCloseBtn" title="關閉">
-                <i class="fas fa-times"></i>
+            <button type="button" class="standee-modal-close" id="standeeCloseBtn" title="關閉" aria-label="關閉視窗">
+                <i class="fas fa-times" aria-hidden="true"></i>
             </button>
 
             <!-- 互動 3D 小樹 ⇄ 像素花園 QR Code 主舞台 (還原參考圖極簡米白風格) -->
