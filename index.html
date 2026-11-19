@@ -7,281 +7,406 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>社群習慣心理測驗 - MapMo | 探索你的社群靈魂人格</title>
+    <title>你是哪一種社群派？ | MapMo 社群心理測驗</title>
     <link rel="icon" type="image/png" href="assets/icon.png">
-    <meta name="description" content="你是潛水觀察派、備忘錄日記派、悄悄發佈派、精修完美派，還是隨心所欲派？4 題直覺快問快答，測出你在社群宇宙的真實樣貌與專屬避風港。">
+    <meta name="description" content="看到喜歡的瞬間，你會拍下來嗎？拍了，會發出去嗎？11 題社群人格心理測驗，測出你是潛水觀察派、備忘錄日記派、悄悄發佈派、精修完美派還是隨心所欲派！">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@500;700;800;900&display=swap"
         rel="stylesheet">
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 
-    <!-- Site Base Style -->
-    <link rel="stylesheet" href="style.css?v=20261116_rwd">
+    <!-- Site Base Variables -->
+    <link rel="stylesheet" href="style.css?v=20261119_v3">
 
-    <!-- Dedicated Quiz Page CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261116_rwd">
+    <!-- Dedicated Editorial Quiz CSS -->
+    <link rel="stylesheet" href="quiz.css?v=20261119_v3">
 </head>
 
 <body class="quiz-page">
 
-    <!-- 背景動態柔光光暈 (Ambient Orbs) -->
-    <div class="quiz-ambient-orb quiz-orb-1"></div>
-    <div class="quiz-ambient-orb quiz-orb-2"></div>
-    <div class="quiz-ambient-orb quiz-orb-3"></div>
+    <!-- Subtle Kraft Paper Grain Overlay -->
+    <div class="kraft-paper-grain" aria-hidden="true"></div>
 
-    <!-- 1. 吸頂導覽列 (Navbar - 獨立專題簡約導航，免除外連未完工介紹頁) -->
-    <nav class="navbar" id="navbar">
+    <!-- 1. 頂部簡約導覽列 -->
+    <header class="navbar" id="navbar">
         <div class="nav-container quiz-nav-standalone">
-            <div class="logo-box">
+            <a href="quiz.html" class="logo-box" aria-label="MapMo 社群人格測驗首頁">
                 <div class="logo-avatar">
-                    <img src="assets/icon.png" alt="MapMo Logo" class="logo-img">
+                    <img src="assets/icon.png" alt="" width="36" height="36" class="logo-img">
                 </div>
-                <img src="assets/logo-text.png" alt="MapMo" class="logo-text-img">
-                <span class="quiz-nav-badge">社群心理測驗</span>
-            </div>
+                <img src="assets/logo-text.png" alt="MapMo" width="88" height="24" class="logo-text-img">
+                <span class="quiz-nav-badge">習慣特刊測驗</span>
+            </a>
 
-            <!-- 右側互動功能小膠囊群 -->
             <div class="nav-actions-group">
-                <button class="pill-action-btn" id="standeeOpenBtn" title="開啟展覽桌上立牌與固定 QR Code 輸出介面">
-                    <i class="fas fa-qrcode"></i> 展場立牌 QR
+                <button type="button" class="pill-action-btn" id="adminOpenBtn" aria-label="開啟數據後台與 Excel 匯出">
+                    <i class="fas fa-chart-bar" aria-hidden="true"></i><span class="pill-label-full"> 數據後台</span><span class="pill-label-short"> 後台</span>
                 </button>
-                <button class="pill-action-btn active" id="soundToggleBtn" title="切換互動音效">
-                    <i class="fas fa-volume-up"></i> 音效
+                <button type="button" class="pill-action-btn" id="standeeOpenBtn" aria-label="開啟展場立牌與黑白列印 QR">
+                    <i class="fas fa-qrcode" aria-hidden="true"></i><span class="pill-label-full"> 展場 QR</span><span class="pill-label-short"> QR</span>
+                </button>
+                <button type="button" class="pill-action-btn active" id="soundToggleBtn" aria-pressed="true" aria-label="切換互動音效">
+                    <i class="fas fa-volume-up" aria-hidden="true"></i><span class="pill-label-full"> 音效</span>
                 </button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- 2. 測驗主要互動區 (Main Interactive Wrapper) -->
-    <main class="quiz-main-wrapper">
+    <!-- 2. 主互動區 -->
+    <main class="quiz-main-wrapper" id="quizMain">
 
         <!-- ───────────────────────────────────────────────
-             SCREEN 1: START SCREEN (測驗啟航首頁)
+             SCREEN 1: 探險手札風首頁 (START SCREEN)
              ─────────────────────────────────────────────── -->
-        <section class="quiz-screen active" id="screenStart">
-            <div class="start-card">
-                <div class="start-header-badge">
-                    <span>✦ MAPMO PSYCHOLOGY INTERACTION ✦</span>
+        <section class="quiz-screen active" id="screenStart" aria-labelledby="heroMainHeading">
+            <div class="journal-hero-stage">
+
+                <!-- 頂部檔案標籤與手寫風格標題 -->
+                <div class="journal-title-cluster">
+                    <div class="journal-issue-ribbon">
+                        <span class="ribbon-tag">MAPMO ARCHIVE · NO.01–05</span>
+                        <span class="ribbon-date"><i class="fas fa-compass" aria-hidden="true"></i> 11 題 · 約 2 分鐘</span>
+                    </div>
+
+                    <p class="journal-kicker-note">這裡記錄著每個人最真實的發文日常</p>
+
+                    <h1 class="journal-display-title" id="heroMainHeading">
+                        <span class="title-line-top">你是哪一種</span>
+                        <span class="title-line-bottom">社群派？</span>
+                    </h1>
                 </div>
 
-                <h1 class="start-title">社群習慣心理測驗</h1>
-                <p class="start-subtitle">
-                    看到美好風景你會立刻按下快門嗎？發文前總是反覆糾結排版？<br>
-                    <strong>4 題直覺決策樹</strong>，精準探測你的真實社群靈魂人格！
-                </p>
+                <!-- 中央 3D 立體翻頁手札插畫 + 手繪放大鏡/膠帶裝飾 -->
+                <figure class="journal-diorama-frame">
+                    <div class="tape-strip tape-top-left" aria-hidden="true"></div>
+                    <div class="tape-strip tape-top-right" aria-hidden="true"></div>
 
-                <div class="start-chips-grid">
-                    <span class="start-chip"><i class="fas fa-user-secret" style="color: #6366F1;"></i> 潛伏觀察 vs 渴望共鳴</span>
-                    <span class="start-chip"><i class="fas fa-shield-alt" style="color: #FBBD04;"></i> 私密樹洞 vs 公開分享</span>
-                    <span class="start-chip"><i class="fas fa-magic" style="color: #F48FB1;"></i> 5 大真實社群性格派系</span>
+                    <img
+                        src="assets/personas/hero-popup-journal.jpg"
+                        alt="打開的地圖日記手札，書頁浮現街角咖啡館、森林公園、海岸步道與心情拍立得"
+                        width="1200"
+                        height="896"
+                        fetchpriority="high"
+                        decoding="async"
+                        class="journal-diorama-img"
+                    >
+
+                    <!-- 右上角落探險貼紙 -->
+                    <div class="journal-stamp-badge" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <span>無標準答案 · 測驗相似度</span>
+                    </div>
+                </figure>
+
+                <!-- 下方撕紙邊緣探險檔案卡 (Torn Kraft Note Card) -->
+                <div class="torn-paper-card">
+                    <div class="torn-card-inner">
+                        <div class="torn-headline-wrap">
+                            <!-- 手繪放大鏡 SVG -->
+                            <svg class="doodle-magnifier" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                                <circle cx="27" cy="27" r="18" fill="#FFFDF7" stroke="#1E1B16" stroke-width="3.5"/>
+                                <circle cx="27" cy="27" r="13" stroke="#1E1B16" stroke-width="1.5" stroke-dasharray="3 3"/>
+                                <path d="M40 40L56 56" stroke="#1E1B16" stroke-width="6" stroke-linecap="round"/>
+                                <path d="M40 40L56 56" stroke="#C59B6D" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+
+                            <div class="torn-copy-block">
+                                <h2 class="torn-card-title">探索你未曾發出去的心事版圖</h2>
+                                <p class="torn-card-sub">
+                                    看到喜歡的瞬間，你會拍下來嗎？拍了，會發出去嗎？<br>
+                                    透過 <strong>10 題相似度比對 ＋ 1 題真心話</strong>，看看你在「潛水 → 備忘錄 → 悄悄 → 精修 → 隨心」光譜上的座標。
+                                </p>
+                            </div>
+
+                            <!-- 手繪指南針 SVG -->
+                            <svg class="doodle-compass" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                                <circle cx="24" cy="24" r="19" fill="#FFF9E6" stroke="#1E1B16" stroke-width="2.8"/>
+                                <polygon points="24,10 29,24 24,22 19,24" fill="#D94E41" stroke="#1E1B16" stroke-width="1.5"/>
+                                <polygon points="24,38 19,24 24,26 29,24" fill="#FFFFFF" stroke="#1E1B16" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+
+                        <!-- 虛線路線預告 -->
+                        <div class="adventure-route-strip" aria-hidden="true">
+                            <span class="route-node"><i class="fas fa-camera"></i> 一、記錄生活</span>
+                            <span class="route-dots">• • • •</span>
+                            <span class="route-node"><i class="fas fa-paper-plane"></i> 二、分享這件事</span>
+                            <span class="route-dots">• • • •</span>
+                            <span class="route-node"><i class="fas fa-eye"></i> 三、別人的眼光</span>
+                            <span class="route-dots">• • • •</span>
+                            <span class="route-node highlight"><i class="fas fa-feather-alt"></i> 結尾真心話</span>
+                        </div>
+
+                        <!-- 主要 CTA 按鈕 -->
+                        <div class="start-cta-row">
+                            <button type="button" class="start-btn-sketch" id="startQuizBtn">
+                                <span>翻開測驗檔案・開始探索</span>
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <!-- 五位代表人物角色預覽圖鑑條 -->
+                        <div class="cast-preview-strip" aria-label="五大社群派系角色圖鑑預覽">
+                            <div class="cast-avatar-pill">
+                                <img src="assets/personas/lurker-char.png" alt="潛水觀察派插畫" width="120" height="81" loading="lazy">
+                                <span>潛水觀察派</span>
+                            </div>
+                            <div class="cast-avatar-pill">
+                                <img src="assets/personas/diarist-char.png" alt="備忘錄日記派插畫" width="120" height="81" loading="lazy">
+                                <span>備忘錄日記派</span>
+                            </div>
+                            <div class="cast-avatar-pill">
+                                <img src="assets/personas/stealth-char.png" alt="悄悄發佈派插畫" width="120" height="81" loading="lazy">
+                                <span>悄悄發佈派</span>
+                            </div>
+                            <div class="cast-avatar-pill">
+                                <img src="assets/personas/curator-char.png" alt="精修完美派插畫" width="120" height="81" loading="lazy">
+                                <span>精修完美派</span>
+                            </div>
+                            <div class="cast-avatar-pill">
+                                <img src="assets/personas/freespirit-char.png" alt="隨心所欲派插畫" width="120" height="81" loading="lazy">
+                                <span>隨心所欲派</span>
+                            </div>
+                        </div>
+
+                        <!-- 展場 QR 快捷列 -->
+                        <div class="start-qr-quick-row">
+                            <button type="button" class="sketch-chip-btn" id="btnOpenTreeQrFromHome">
+                                <i class="fas fa-tree" style="color: #4D7C0F;" aria-hidden="true"></i> 3D 情緒樹 QR
+                            </button>
+                            <button type="button" class="sketch-chip-btn dark" id="btnOpenBwQrFromHome">
+                                <i class="fas fa-print" aria-hidden="true"></i> 黑白列印版 QR
+                            </button>
+                        </div>
+
+                        <p class="start-exhibition-hint">
+                            <i class="fas fa-check-circle" style="color: #16A34A;" aria-hidden="true"></i> 已有 <strong id="startTotalBadge">0</strong> 人完成檔案探測・展覽現場支援一鍵掃碼
+                        </p>
+                    </div>
                 </div>
 
-                <button class="start-btn-primary" id="startQuizBtn">
-                    開始探索社群人格 <i class="fas fa-arrow-right"></i>
-                </button>
-
-                <div style="margin-top: 14px;">
-                    <button type="button" class="pill-action-btn" onclick="document.getElementById('standeeOpenBtn').click()" style="padding: 8px 18px; font-size: 13px; background: #FAF8F3; border-color: #DCD6CA;">
-                        <i class="fas fa-tree" style="color: #679436;"></i> 3D 情緒樹 ⇄ 像素花園 QR Code 生成器
-                    </button>
-                </div>
-
-                <div class="start-exhibition-hint">
-                    <i class="fas fa-check-circle" style="color: #30D158;"></i> 展覽現場支援手機一鍵掃碼 · 產出專屬拍立得卡片
+                <!-- 全站即時人格統計卡 -->
+                <div class="live-stats-card" id="liveStatsStartPanel">
+                    <div class="live-stats-header">
+                        <div class="live-stats-title-group">
+                            <span class="live-dot-pulse" id="liveSyncDot" aria-hidden="true"></span>
+                            <h3>全站即時人格統計</h3>
+                        </div>
+                        <div class="live-stats-total-pill">
+                            累積 <strong id="liveStatsTotalCount">0</strong> 人完成
+                        </div>
+                    </div>
+                    <div class="live-stats-bars" id="liveStatsBars"></div>
+                    <div class="live-stats-footer">
+                        <span class="live-stats-source-note" id="liveStatsSourceNote">Google 試算表雲端即時統計</span>
+                        <button type="button" class="live-stats-admin-link" id="btnOpenAdminFromHome">
+                            <i class="fas fa-table" aria-hidden="true"></i> 後台明細 / Excel 試算表
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- ───────────────────────────────────────────────
-             SCREEN 2: QUIZ STEPS SCREEN (決策樹動態問答卡)
+             SCREEN 2: QUIZ CARD (引言過門頁 ＋ 11 題問答卡)
              ─────────────────────────────────────────────── -->
-        <section class="quiz-screen" id="screenQuiz">
+        <section class="quiz-screen" id="screenQuiz" aria-labelledby="qPromptText">
             <div class="quiz-step-card">
                 <!-- 頂部進度條 -->
-                <div class="quiz-progress-bar-wrap">
+                <div class="quiz-progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="qProgressBarRole">
                     <div class="quiz-progress-bar-fill" id="qProgressFill"></div>
                 </div>
 
-                <!-- 頂部控制列 (返回 + 步驟標籤) -->
+                <!-- 進度文字與章節名 (1 / 11 ｜ 記錄生活) -->
                 <div class="quiz-nav-top-row">
-                    <button class="quiz-back-btn" id="qBackBtn">
-                        <i class="fas fa-arrow-left"></i> 回上一題
+                    <span class="quiz-step-indicator" id="qStepIndicator">1 / 11</span>
+                    <span class="quiz-section-name-pill" id="qSectionLabel">記錄生活</span>
+                </div>
+
+                <!-- 章節引言提示盒 (依規格：僅在各章節第一題 Q1 / Q4 / Q8 / Q11 顯示於題目上方) -->
+                <div class="quiz-section-quote-banner" id="qSectionQuoteBanner" hidden>
+                    <span class="quote-banner-section" id="qSectionQuoteTitle">一、記錄生活</span>
+                    <p class="quote-banner-text" id="qSectionQuoteText">先從日常開始，那些讓你停下腳步的小瞬間。</p>
+                </div>
+
+                <!-- 題目作答區 -->
+                <div class="quiz-question-view" id="qQuestionView">
+                    <h2 class="question-prompt-text" id="qPromptText">
+                        走在路上遇到超美的夕陽，你會？
+                    </h2>
+                    <div class="quiz-options-container" id="qOptionsContainer"></div>
+                </div>
+
+                <!-- 底部左下角返回上一題 (第 2～11 題顯示) -->
+                <div class="quiz-bottom-nav-row">
+                    <button type="button" class="quiz-back-btn" id="qBackBtn">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i> 上一題
                     </button>
-                    <span class="quiz-step-indicator" id="qStepIndicator">Q1 / 4</span>
-                </div>
-
-                <!-- 實時決策樹路徑追蹤 (Decision Breadcrumbs) -->
-                <div class="quiz-decision-path-tracker" id="qBreadcrumbTracker">
-                    <!-- 動態由 JavaScript 生成 -->
-                </div>
-
-                <!-- 題目核心區 -->
-                <div class="question-category-tag" id="qCategoryTag">Step 01 · 紀錄習慣</div>
-                <h2 class="question-prompt-text" id="qPromptText">
-                    看到喜歡的風景、美食或日常瞬間，你習慣隨手拍照把它記下來嗎？
-                </h2>
-
-                <!-- 選項按鈕區 -->
-                <div class="quiz-options-container" id="qOptionsContainer">
-                    <!-- 動態由 JavaScript 生成 -->
                 </div>
             </div>
         </section>
 
         <!-- ───────────────────────────────────────────────
-             SCREEN 3: ANALYZING SCREEN (心理演算過渡)
+             SCREEN 3: ANALYZING SCREEN (相似度演算過渡)
              ─────────────────────────────────────────────── -->
-        <section class="quiz-screen" id="screenAnalyzing">
+        <section class="quiz-screen" id="screenAnalyzing" aria-live="polite">
             <div class="quiz-analyzing-card">
                 <div class="analyzing-spinner-ring">
-                    <img src="assets/icon.png" alt="MapMo" class="analyzing-logo-icon">
+                    <img src="assets/icon.png" alt="MapMo" width="44" height="44" class="analyzing-logo-icon">
                 </div>
-                <h3 class="analyzing-title">正在解析您的社群心理軌跡...</h3>
-                <p class="analyzing-subtext" id="analyzingSubtext">正在比對 5 大社群性格光譜...</p>
+                <h2 class="analyzing-title">正在比對你的社群派別相似度...</h2>
+                <p class="analyzing-subtext" id="analyzingSubtext">正在核對 Q1–Q10 五大派別吻合題數...</p>
             </div>
         </section>
 
         <!-- ───────────────────────────────────────────────
-             SCREEN 4: RESULT SCREEN (拍立得卡片與專屬功能解鎖)
+             SCREEN 4: RESULT SCREEN (結果特刊頁 · 嚴格照規格順序)
              ─────────────────────────────────────────────── -->
-        <section class="quiz-screen" id="screenResult">
+        <section class="quiz-screen" id="screenResult" aria-labelledby="personaMainTitle">
             <div class="result-screen-container">
 
-                <!-- 拍立得風格核心成果卡片 (可匯出為高清社群圖) -->
-                <div class="polaroid-export-target" id="polaroidExportTarget">
-                    <!-- 頂部紙膠帶造型裝飾 -->
-                    <div class="polaroid-tape-graphic"></div>
-
-                    <!-- 拍立得頂部 Header -->
-                    <div class="polaroid-top-bar">
-                        <div class="polaroid-brand-tag">
-                            <img src="assets/icon.png" alt="MapMo" class="polaroid-logo-img">
-                            <span class="polaroid-brand-name">MAPMO PSYCHOLOGY ARCHIVE</span>
-                        </div>
-                        <span class="polaroid-serial" id="polaroidSerial">NO. MAPMO-8821</span>
+                <!-- 1~3. 核心特刊結果卡片 -->
+                <article class="result-zine-card" id="resultZineCard">
+                    <div class="result-zine-topbar">
+                        <span class="result-zine-brand">MAPMO 習慣特刊 · 測驗檔案</span>
+                        <span class="result-zine-serial" id="polaroidSerial">NO. MAPMO-0001</span>
                     </div>
 
-                    <!-- 派系核心英雄區 -->
-                    <div class="persona-hero-box">
-                        <div class="persona-badge-pill" id="personaBadgePill">
-                            <i class="fas fa-sparkles"></i> 哀 · 靜謐思緒
-                        </div>
-                        <h2 class="persona-main-title" id="personaMainTitle">｜潛水觀察派｜</h2>
-                        <div class="persona-tagline-quote" id="personaTagline">靜默漫遊的城市觀察者</div>
-                    </div>
-
-                    <!-- 靈魂金句色塊 -->
-                    <div class="persona-soul-quote-box" id="personaSoulQuoteBox">
-                        <div class="soul-quote-label">✦ 靈魂金句 ✦</div>
-                        <div class="soul-quote-text" id="personaSoulQuote">
-                            「我不在社群大聲喧嘩，但我比誰都細膩地閱讀著這座城市的喜怒哀樂。」
-                        </div>
-                    </div>
-
-                    <!-- 社群現狀剖析 -->
-                    <div class="persona-status-box">
-                        <div class="status-box-header">
-                            <i class="fas fa-fingerprint" style="color: #6366F1;"></i> 社群現狀剖析
-                        </div>
-                        <div class="status-box-body" id="personaStatusText">
-                            沒有特別習慣紀錄生活，但是喜歡看熟人或陌生人紀錄的生活。
-                        </div>
-                    </div>
-
-                    <!-- 隱藏性格解析 -->
-                    <div class="persona-status-box" style="background: #FAF9F6;">
-                        <div class="status-box-header">
-                            <i class="fas fa-lightbulb" style="color: #FBBD04;"></i> 隱藏性格盲點與渴望
-                        </div>
-                        <div class="status-box-body" id="personaInsightText">
-                            你是最溫柔的城市讀者。比起自己發文成為焦點，你更享受在無壓力的角落默默看著熟人與陌生人的生活切片。
-                        </div>
-                    </div>
-
-                    <!-- 三維社群能量指數 -->
-                    <div class="persona-energy-dimensions">
-                        <div class="dimension-item">
-                            <div class="dimension-header">
-                                <span id="dimRecordLabel">紀錄生活熱情</span>
-                                <span id="dimRecordVal" style="color: #4285F4; font-weight: 800;">18%</span>
-                            </div>
-                            <div class="dimension-track">
-                                <div class="dimension-fill" id="dimRecordFill" style="width: 18%; background: #4285F4;"></div>
+                    <!-- 主派別名稱 + 代表人物透明插畫 -->
+                    <div class="result-hero-grid">
+                        <div class="result-identity-col">
+                            <span class="result-issue-pill" id="personaIssuePill">No. 1 · THE QUIET POSTER</span>
+                            <h2 class="result-persona-name" id="personaMainTitle">悄悄發佈派</h2>
+                            <p class="result-persona-motto" id="personaMotto">發了，但希望你晚點再看到</p>
+                            <div class="result-match-highlight" id="personaMatchHighlight">
+                                相似度最高 · <strong>80%</strong>（吻合 8 / 10 題）
                             </div>
                         </div>
 
-                        <div class="dimension-item">
-                            <div class="dimension-header">
-                                <span id="dimAwarenessLabel">他人眼光敏感度</span>
-                                <span id="dimAwarenessVal" style="color: #EA4335; font-weight: 800;">20%</span>
-                            </div>
-                            <div class="dimension-track">
-                                <div class="dimension-fill" id="dimAwarenessFill" style="width: 20%; background: #EA4335;"></div>
-                            </div>
-                        </div>
-
-                        <div class="dimension-item">
-                            <div class="dimension-header">
-                                <span id="dimShareLabel">公開分享欲求</span>
-                                <span id="dimShareVal" style="color: #6366F1; font-weight: 800;">12%</span>
-                            </div>
-                            <div class="dimension-track">
-                                <div class="dimension-fill" id="dimShareFill" style="width: 12%; background: #6366F1;"></div>
-                            </div>
+                        <div class="result-char-stage" id="resultCharStage">
+                            <img
+                                id="resultCharImg"
+                                src="assets/personas/stealth-char.png"
+                                alt="派別代表人物插畫"
+                                width="1024"
+                                height="689"
+                                fetchpriority="low"
+                                class="result-char-img"
+                            >
                         </div>
                     </div>
 
-                    <!-- 最適合的 MapMo 專屬功能 -->
-                    <div class="persona-features-section">
-                        <div class="features-sec-title">
-                            <i class="fas fa-compass" style="color: #6366F1;"></i> 為你推薦的 MapMo 專屬功能解鎖
-                        </div>
-                        <div class="features-grid-stack" id="personaFeaturesList">
-                            <!-- 動態注入主要適合與次要推薦卡片 -->
+                    <!-- 2. 派別描述 + 條件式第二派別影子提示 -->
+                    <div class="result-description-box">
+                        <p class="result-description-text" id="personaDescriptionText"></p>
+                        <div class="second-persona-shadow" id="secondPersonaShadow" hidden>
+                            <i class="fas fa-adjust" aria-hidden="true"></i>
+                            <span id="secondPersonaShadowText">你也有幾分精修完美派的影子。</span>
                         </div>
                     </div>
 
-                    <!-- 底部掃描與專屬 QR Code (分享時朋友可直接掃描) -->
+                    <!-- 3. 五個派別相似度長條圖（嚴格依光譜順序：潛水→備忘錄→悄悄→精修→隨心，僅主派別上色） -->
+                    <div class="spectrum-similarity-section">
+                        <div class="spectrum-header-row">
+                            <h3><i class="fas fa-sliders-h" aria-hidden="true"></i> 五大派別相似度光譜</h3>
+                            <span class="spectrum-axis-hint">不記錄也不分享 ➔ 想發就發</span>
+                        </div>
+                        <div class="spectrum-bars-list" id="spectrumBarsList"></div>
+                    </div>
+
+                    <!-- 特刊答案海報收藏區（可直接預覽或下載對應習慣特刊海報） -->
+                    <div class="result-poster-showcase">
+                        <div class="poster-thumb-wrap">
+                            <img
+                                id="resultPosterImg"
+                                src="assets/personas/stealth-poster.jpg"
+                                alt="習慣特刊答案海報"
+                                width="723"
+                                height="1024"
+                                fetchpriority="low"
+                                decoding="async"
+                                class="poster-thumb-img"
+                            >
+                        </div>
+                        <div class="poster-copy-col">
+                            <span class="poster-eyebrow">COLLECTIBLE ZINE · 專屬特刊</span>
+                            <h3 class="poster-card-heading" id="posterCardHeading">《習慣特刊》悄悄發佈派專刊</h3>
+                            <p class="poster-card-desc" id="posterObserveDesc"></p>
+                            <button type="button" class="btn-download-poster-only" id="btnDownloadZinePoster">
+                                <i class="fas fa-newspaper" aria-hidden="true"></i> 下載這張《習慣特刊》原圖海報
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 結尾 Q11 真心話 ＋ MapMo 介紹與功能推薦（PDF: 結果頁可以接著介紹 MapMo） -->
+                    <div class="mapmo-bridge-card">
+                        <div class="q11-reflection-pill" id="q11ReflectionPill" hidden>
+                            <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                            <span id="q11ReflectionText">如果不用擔心誰看到，你最想分享：一處讓我停下腳步的風景</span>
+                        </div>
+
+                        <div class="mapmo-bridge-header">
+                            <img src="assets/icon.png" alt="MapMo" width="38" height="38" class="bridge-logo-img">
+                            <div>
+                                <h3>在 MapMo，不用在乎誰先看見</h3>
+                                <p>零讚數、零留言、不綁真實身份的情緒地圖，讓每個派別都能用最舒服的距離記住生活。</p>
+                            </div>
+                        </div>
+
+                        <div class="features-grid-stack" id="personaFeaturesList"></div>
+
+                        <div class="mapmo-bridge-footer-link">
+                            <a href="https://chen1an.github.io/mapmo-web/" target="_blank" rel="noopener noreferrer" class="btn-visit-mapmo">
+                                <i class="fas fa-map-marked-alt" aria-hidden="true"></i> 認識 MapMo 官方網站與 App 介紹
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 底部 QR (用於匯出圖卡時讀取) -->
                     <div class="polaroid-card-footer">
                         <div class="card-footer-info">
-                            <div class="card-footer-title">MapMo 城市情緒樹洞</div>
-                            <div class="card-footer-sub">掃描 QR Code · 測測你的社群人格</div>
+                            <div class="card-footer-title">MapMo 全匿名地理情緒樹洞</div>
+                            <div class="card-footer-sub">掃描 QR Code · 測測你是哪一種社群派？</div>
                         </div>
-                        <div class="card-footer-qr-box" id="cardFooterQrHolder">
-                            <!-- 動態生成 QR Code -->
-                        </div>
+                        <div class="card-footer-qr-box" id="cardFooterQrHolder"></div>
+                    </div>
+                </article>
+
+                <!-- 4. 「再測一次」與分享/下載動作列 -->
+                <div class="result-action-toolbar">
+                    <div class="action-row-buttons">
+                        <button type="button" class="btn-result-action primary" id="btnRestartQuiz">
+                            <i class="fas fa-redo-alt" aria-hidden="true"></i> 再測一次
+                        </button>
+                        <button type="button" class="btn-result-action secondary" id="btnDownloadResultImg">
+                            <i class="fas fa-download" aria-hidden="true"></i> 下載測驗結果分享圖
+                        </button>
+                    </div>
+
+                    <div class="action-row-buttons">
+                        <button type="button" class="btn-result-action secondary" id="btnCopyQuizLink">
+                            <i class="fas fa-share-alt" aria-hidden="true"></i> 複製測驗連結分享
+                        </button>
+                        <button type="button" class="btn-result-action secondary" id="btnOpenQrFromResult">
+                            <i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌 / 黑白 QR
+                        </button>
                     </div>
                 </div>
 
-                <!-- 互動操作按鈕列 (Action Toolbar) -->
-                <div class="result-action-toolbar">
-                    <div class="action-row-buttons">
-                        <button class="btn-result-action primary" id="btnDownloadResultImg">
-                            <i class="fas fa-download"></i> 下載專屬結果美圖 (IG/列印)
-                        </button>
-                        <button class="btn-result-action secondary" id="btnCopyQuizLink">
-                            <i class="fas fa-share-alt"></i> 複製測驗連結分享
-                        </button>
+                <!-- 結果頁即時全場人格統計 -->
+                <div class="result-crowd-card" id="resultCrowdCard">
+                    <div class="result-crowd-header">
+                        <span class="result-crowd-tag"><i class="fas fa-users" aria-hidden="true"></i> 展場即時人數對照</span>
+                        <span class="result-crowd-sync" id="resultCrowdSyncBadge">同步完成</span>
                     </div>
-
-                    <div class="action-row-buttons">
-                        <button class="btn-result-action secondary" id="btnRestartQuiz">
-                            <i class="fas fa-redo-alt"></i> 重新測驗
-                        </button>
-                        <button class="btn-result-action secondary" onclick="document.getElementById('standeeOpenBtn').click()">
-                            <i class="fas fa-qrcode"></i> 展覽立牌 QR Code
-                        </button>
-                    </div>
-
-                    <button class="btn-result-action tertiary" onclick="document.getElementById('standeeOpenBtn').click()">
-                        <i class="fas fa-print"></i> 需要在展覽現場印出立牌？開啟展場專用 QR Code 列印面版
-                    </button>
+                    <p class="result-crowd-headline" id="resultCrowdHeadline">正在讀取全站人格統計...</p>
+                    <div class="live-stats-bars compact" id="resultCrowdBars"></div>
                 </div>
 
             </div>
@@ -290,109 +415,274 @@
     </main>
 
     <!-- ───────────────────────────────────────────────
-         3. 3D 情緒樹 ⇄ 像素花園 QR Code 互動生成器 & 展場立牌彈窗
+         3. Native <dialog> 展場 QR / 黑白列印面板 (#standeeModal)
          ─────────────────────────────────────────────── -->
-    <div class="standee-modal-backdrop" id="standeeModal">
+    <dialog class="native-modal-dialog tree-qr-dialog" id="standeeModal" closedby="any" aria-labelledby="standeeDialogTitle">
         <div class="standee-modal-box tree-qr-studio-box">
-            <button type="button" class="standee-modal-close" id="standeeCloseBtn" title="關閉" aria-label="關閉視窗">
+            <h2 id="standeeDialogTitle" class="visually-hidden">展場 3D 情緒樹與黑白列印 QR Code 工具</h2>
+            <button type="button" class="standee-modal-close" id="standeeCloseBtn" aria-label="關閉 QR Code 視窗">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
 
-            <!-- 互動 3D 小樹 ⇄ 像素花園 QR Code 主舞台 (還原參考圖極簡米白風格) -->
-            <div class="tree-qr-stage-wrapper" id="standeePrintPaper">
-                <!-- 列印立牌時顯示之頂部品牌標題 (螢幕預覽時精簡優雅) -->
-                <div class="tree-qr-print-only-header">
-                    <img src="assets/icon.png" alt="MapMo Logo" class="standee-logo-img">
-                    <span class="standee-brand-text">MapMo · 社群習慣心理測驗</span>
+            <div class="qr-studio-tabs" role="tablist" aria-label="QR Code 樣式模式">
+                <button type="button" class="qr-studio-tab active" id="tabTreeQrBtn" role="tab" aria-selected="true" aria-controls="treeQrPane">
+                    <i class="fas fa-tree" aria-hidden="true"></i> 3D 情緒樹 / 花園
+                </button>
+                <button type="button" class="qr-studio-tab" id="tabBwQrBtn" role="tab" aria-selected="false" aria-controls="bwQrPane">
+                    <i class="fas fa-qrcode" aria-hidden="true"></i> 黑白列印版 QR
+                </button>
+            </div>
+
+            <!-- 分頁一：彩色 3D 小樹 / 花園 QR -->
+            <div id="treeQrPane" role="tabpanel" aria-labelledby="tabTreeQrBtn">
+                <div class="tree-qr-stage-wrapper" id="standeePrintPaper">
+                    <div class="tree-qr-print-only-header">
+                        <img src="assets/icon.png" alt="MapMo Logo" class="standee-logo-img">
+                        <span class="standee-brand-text">MapMo · 你是哪一種社群派？</span>
+                    </div>
+
+                    <div class="tree-qr-canvas-container" id="treeQrCanvasContainer" title="點擊大樹切換像素花園 QR Code">
+                        <canvas id="treeQrInteractiveCanvas" width="520" height="520"></canvas>
+                    </div>
+
+                    <div class="tree-qr-hint-row">
+                        <button type="button" class="tree-qr-toggle-pill" id="treeQrTogglePill">
+                            Tap the tree to see QR code · 點擊小樹顯示 QR Code
+                        </button>
+                    </div>
+
+                    <div class="tree-qr-url-row">
+                        <label for="treeQrUrlInput" class="visually-hidden">心理測驗 QR 網址</label>
+                        <input
+                            type="text"
+                            id="treeQrUrlInput"
+                            class="tree-qr-url-input"
+                            value="https://chen1an.github.io/mapmo-quiz/"
+                            spellcheck="false"
+                        >
+                        <button type="button" class="tree-qr-download-btn" id="btnDownloadQR" aria-label="下載像素花園 QR Code 圖檔">
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <div class="tree-qr-season-row">
+                        <button type="button" class="tree-season-btn active" data-season="spring">
+                            <i class="fas fa-spa" aria-hidden="true"></i> Spring
+                        </button>
+                        <button type="button" class="tree-season-btn" data-season="summer">
+                            <i class="fas fa-sun" aria-hidden="true"></i> Summer
+                        </button>
+                        <button type="button" class="tree-season-btn" data-season="autumn">
+                            <i class="fas fa-leaf" aria-hidden="true"></i> Autumn
+                        </button>
+                        <button type="button" class="tree-sound-btn" id="treeSoundToggleBtn" aria-label="切換樹影環境音效">
+                            <i class="fas fa-volume-up" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <div class="tree-qr-Palette-row" id="treeQrPaletteRow">
+                        <button type="button" class="tree-color-dot active" data-color="pink" style="background: #DC607E;" aria-label="櫻花粉"></button>
+                        <button type="button" class="tree-color-dot" data-color="purple" style="background: #6D4CE6;" aria-label="薰衣草紫"></button>
+                        <button type="button" class="tree-color-dot" data-color="red" style="background: #C9352B;" aria-label="楓葉紅"></button>
+                        <button type="button" class="tree-color-dot" data-color="yellow" style="background: #E0A21B;" aria-label="暖陽黃"></button>
+                        <button type="button" class="tree-color-dot" data-color="blue" style="background: #4285F4;" aria-label="晴空藍"></button>
+                        <button type="button" class="tree-color-dot" data-color="grey" style="background: #687B8C;" aria-label="靜謐霧灰"></button>
+                    </div>
+
+                    <div class="tree-qr-extra-actions">
+                        <button type="button" class="tree-extra-btn" id="btnPrintStandee">
+                            <i class="fas fa-print" aria-hidden="true"></i> 直接列印展場立牌
+                        </button>
+                        <button type="button" class="tree-extra-btn" id="btnDownloadTreeView">
+                            <i class="fas fa-tree" aria-hidden="true"></i> 下載當前畫面圖檔
+                        </button>
+                    </div>
+
+                    <div id="standeeQrHolder" style="display: none;"></div>
+                    <div id="standeeUrlCaption" style="display: none;">https://chen1an.github.io/mapmo-quiz/</div>
+                </div>
+            </div>
+
+            <!-- 分頁二：純黑白高對比列印 QR -->
+            <div id="bwQrPane" class="bw-qr-pane" role="tabpanel" aria-labelledby="tabBwQrBtn" hidden>
+                <div class="bw-print-card" id="bwPrintCard">
+                    <div class="bw-print-header">
+                        <span class="bw-print-brand">MAPMO</span>
+                        <span class="bw-print-divider">·</span>
+                        <span class="bw-print-tag">你是哪一種社群派？</span>
+                    </div>
+                    <h3 class="bw-print-title" id="bwPrintTitleDisplay">掃描測出你的社群派別</h3>
+                    <div class="bw-qr-frame">
+                        <canvas id="bwQrCanvas" width="420" height="420"></canvas>
+                    </div>
+                    <p class="bw-print-caption">打開手機相機對準黑白條碼即可進入 · 11 題約 2 分鐘</p>
+                    <div class="bw-print-url" id="bwPrintUrlDisplay">https://chen1an.github.io/mapmo-quiz/</div>
                 </div>
 
-                <!-- 3D 等距小樹 / 2D 像素花園 QR 互動畫布 -->
-                <div class="tree-qr-canvas-container" id="treeQrCanvasContainer" title="點擊大樹切換像素花園 QR Code">
-                    <canvas id="treeQrInteractiveCanvas" width="520" height="520"></canvas>
+                <div class="bw-qr-controls">
+                    <div class="bw-input-group">
+                        <label for="bwQrTitleInput">立牌副標題</label>
+                        <input type="text" id="bwQrTitleInput" class="tree-qr-url-input" value="掃描測出你的社群派別" maxlength="40">
+                    </div>
+                    <div class="bw-input-group">
+                        <label for="bwQrUrlInput">QR 目標網址</label>
+                        <input type="text" id="bwQrUrlInput" class="tree-qr-url-input" value="https://chen1an.github.io/mapmo-quiz/" spellcheck="false">
+                    </div>
+                    <div class="bw-qr-actions-grid">
+                        <button type="button" class="bw-action-btn primary" id="btnDownloadBwRawQr">
+                            <i class="fas fa-download" aria-hidden="true"></i> 下載純黑白 QR 圖 (PNG)
+                        </button>
+                        <button type="button" class="bw-action-btn secondary" id="btnDownloadBwPoster">
+                            <i class="fas fa-image" aria-hidden="true"></i> 下載黑白海報立牌
+                        </button>
+                        <button type="button" class="bw-action-btn secondary full-span" id="btnPrintBwStandee">
+                            <i class="fas fa-print" aria-hidden="true"></i> 直接黑白列印 (省墨高對比 A4/A5)
+                        </button>
+                    </div>
                 </div>
-
-                <!-- 輕觸切換提示膠囊 -->
-                <div class="tree-qr-hint-row">
-                    <button type="button" class="tree-qr-toggle-pill" id="treeQrTogglePill">
-                        Tap the tree to see QR code · 點擊小樹顯示 QR Code
-                    </button>
-                </div>
-
-                <!-- 固定網址輸入列 + 棕色下載按鈕 -->
-                <div class="tree-qr-url-row">
-                    <input
-                        type="text"
-                        id="treeQrUrlInput"
-                        class="tree-qr-url-input"
-                        value="https://chen1an.github.io/mapmo-quiz/"
-                        spellcheck="false"
-                        aria-label="QR Code URL"
-                    />
-                    <button type="button" class="tree-qr-download-btn" id="btnDownloadQR" title="下載高解析像素花園 QR Code 圖檔">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-
-                <!-- 季節與音效切換列 (Spring / Summer / Autumn + Sound) -->
-                <div class="tree-qr-season-row">
-                    <button type="button" class="tree-season-btn active" data-season="spring">
-                        <i class="fas fa-spa"></i> Spring
-                    </button>
-                    <button type="button" class="tree-season-btn" data-season="summer">
-                        <i class="fas fa-sun"></i> Summer
-                    </button>
-                    <button type="button" class="tree-season-btn" data-season="autumn">
-                        <i class="fas fa-leaf"></i> Autumn
-                    </button>
-                    <button type="button" class="tree-sound-btn" id="treeSoundToggleBtn" title="切換環境音效">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
-                </div>
-
-                <!-- 6 色情緒調色盤圓點 (粉、紫、紅、黃、藍、灰) -->
-                <div class="tree-qr-Palette-row" id="treeQrPaletteRow">
-                    <button type="button" class="tree-color-dot active" data-color="pink" style="background: #DC607E;" title="櫻花粉 (樂)"></button>
-                    <button type="button" class="tree-color-dot" data-color="purple" style="background: #6D4CE6;" title="薰衣草紫 (推播)"></button>
-                    <button type="button" class="tree-color-dot" data-color="red" style="background: #C9352B;" title="楓葉紅 (怒)"></button>
-                    <button type="button" class="tree-color-dot" data-color="yellow" style="background: #E0A21B;" title="暖陽黃 (喜)"></button>
-                    <button type="button" class="tree-color-dot" data-color="blue" style="background: #4285F4;" title="晴空藍 (哀)"></button>
-                    <button type="button" class="tree-color-dot" data-color="grey" style="background: #687B8C;" title="靜謐霧灰 (無)"></button>
-                </div>
-
-                <!-- 底部輔助操作：列印展場立牌 / 下載小樹海報 -->
-                <div class="tree-qr-extra-actions">
-                    <button type="button" class="tree-extra-btn" id="btnPrintStandee">
-                        <i class="fas fa-print"></i> 直接列印展場立牌
-                    </button>
-                    <button type="button" class="tree-extra-btn" id="btnDownloadTreeView">
-                        <i class="fas fa-tree"></i> 下載當前畫面圖檔
-                    </button>
-                </div>
-
-                <!-- 隱藏相容容器供既有邏輯引用 -->
-                <div id="standeeQrHolder" style="display: none;"></div>
-                <div id="standeeUrlCaption" style="display: none;">https://chen1an.github.io/mapmo-quiz/</div>
             </div>
         </div>
+    </dialog>
+
+    <!-- ───────────────────────────────────────────────
+         4. Native <dialog> Google 試算表後台 / Excel / Q11展板數據 (#adminModal)
+         ─────────────────────────────────────────────── -->
+    <dialog class="native-modal-dialog admin-dialog" id="adminModal" closedby="any" aria-labelledby="adminModalTitle">
+        <div class="standee-modal-box admin-modal-box">
+            <button type="button" class="standee-modal-close" id="adminCloseBtn" aria-label="關閉後台視窗">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+
+            <div class="admin-header-row">
+                <div>
+                    <span class="admin-eyebrow">MAPMO QUIZ BACKEND · GOOGLE SHEETS</span>
+                    <h2 class="admin-title" id="adminModalTitle">Google 試算表數據與 Excel 匯出</h2>
+                </div>
+                <div class="admin-status-badge" id="adminSyncStatus">
+                    <span class="live-dot-pulse" aria-hidden="true"></span> Google 試算表連動
+                </div>
+            </div>
+
+            <div class="admin-kpi-grid">
+                <div class="admin-kpi-card">
+                    <span class="admin-kpi-label">累積測驗人數</span>
+                    <strong class="admin-kpi-value" id="adminKpiTotal">0</strong>
+                </div>
+                <div class="admin-kpi-card">
+                    <span class="admin-kpi-label">目前最多人數派別</span>
+                    <strong class="admin-kpi-value compact" id="adminKpiTop">—</strong>
+                </div>
+                <div class="admin-kpi-card">
+                    <span class="admin-kpi-label">明細紀錄筆數</span>
+                    <strong class="admin-kpi-value" id="adminKpiRows">0</strong>
+                </div>
+                <div class="admin-kpi-card">
+                    <span class="admin-kpi-label">待補同步佇列</span>
+                    <strong class="admin-kpi-value" id="adminKpiPending">0</strong>
+                </div>
+            </div>
+
+            <div class="admin-actions-toolbar">
+                <button type="button" class="admin-btn primary" id="btnExportXls">
+                    <i class="fas fa-file-excel" aria-hidden="true"></i> 下載 Excel 活頁簿 (.xls)
+                </button>
+                <button type="button" class="admin-btn secondary" id="btnExportCsv">
+                    <i class="fas fa-file-csv" aria-hidden="true"></i> 下載純數據 (.csv)
+                </button>
+                <button type="button" class="admin-btn ghost" id="btnRefreshAdmin">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i> 重新抓取試算表
+                </button>
+            </div>
+
+            <details class="admin-sheets-box" id="adminSheetsConfigBox" style="margin-bottom:18px;">
+                <summary><i class="fas fa-table" aria-hidden="true"></i> Google 試算表串接設定（已內建綁定・完全獨立不碰主 App Firebase）</summary>
+                <div class="admin-sheets-inner">
+                    <p class="admin-sheets-desc">已預設串接你的 MapMo 心理測驗試算表端點；如需更換試算表，可複製下方腳本重新部署為「所有人」後於此處替換網址。</p>
+                    <div class="bw-qr-url-row" style="display:flex;gap:8px;margin-bottom:10px;">
+                        <label for="sheetsWebhookInput" class="visually-hidden">Google Apps Script Web App URL</label>
+                        <input type="url" id="sheetsWebhookInput" class="tree-qr-url-input" placeholder="https://script.google.com/macros/s/.../exec">
+                        <button type="button" class="admin-btn secondary" id="btnSaveWebhook" style="white-space:nowrap;">儲存網址</button>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="admin-btn ghost" id="btnCopyAppsScript">
+                            <i class="fas fa-copy" aria-hidden="true"></i> 複製完整 Google 試算表腳本 (含總表公式)
+                        </button>
+                        <button type="button" class="admin-btn ghost" id="btnTestWebhook">
+                            <i class="fas fa-paper-plane" aria-hidden="true"></i> 送出一筆測試資料列
+                        </button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 五大派別統計表 -->
+            <div class="admin-section-block">
+                <h3 class="admin-sec-heading"><i class="fas fa-chart-pie" aria-hidden="true"></i> 五大社群派別統計總表</h3>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">派別名稱</th>
+                                <th scope="col">典型特徵</th>
+                                <th scope="col">累積人數</th>
+                                <th scope="col">佔比</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminSummaryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Q11 展板數據統計（PDF 要求：不計分但記錄答案作展板數據） -->
+            <div class="admin-section-block">
+                <h3 class="admin-sec-heading"><i class="fas fa-feather-alt" aria-hidden="true"></i> Q11 展板數據：不用擔心誰看到時，最想分享什麼？</h3>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">選項</th>
+                                <th scope="col">心聲內容</th>
+                                <th scope="col">選擇人數</th>
+                                <th scope="col">佔比</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminQ11Body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 近期作答明細 -->
+            <div class="admin-section-block" style="margin-bottom:0;">
+                <div class="admin-sec-head-row">
+                    <h3 class="admin-sec-heading"><i class="fas fa-list-ul" aria-hidden="true"></i> 近期作答明細（刪除列請直接至 Google 試算表操作）</h3>
+                    <button type="button" class="admin-reset-link" id="btnResetTestStats">清除本機暫存紀錄</button>
+                </div>
+                <div class="admin-table-wrap tall">
+                    <table class="admin-table records-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">完成時間</th>
+                                <th scope="col">檔案編號</th>
+                                <th scope="col">主派別（相似度）</th>
+                                <th scope="col">Q11 與五派別吻合</th>
+                                <th scope="col">裝置</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminRecordsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toastNotification" role="status" aria-live="polite">
+        <i class="fas fa-check-circle" aria-hidden="true"></i> <span id="toastMessage">已複製！</span>
     </div>
 
-    <!-- 4. 底部版權宣告 (Footer - 獨立專題) -->
-    <footer class="footer" style="margin-top: auto; padding: 32px 20px; text-align: center; border-top: 1px solid rgba(0,0,0,0.06); background: rgba(250, 249, 246, 0.8);">
-        <p style="font-size: 13px; color: #8E8E93; margin-bottom: 6px;">
-            © 2026 MapMo. All rights reserved. · 全匿名地理情緒樹洞
-        </p>
-        <p style="font-size: 12px; color: #AEAEB2;">
-            展覽現場專屬互動 · 社群習慣心理測驗
-        </p>
-    </footer>
-
-    <!-- Standalone QR Code Generator -->
-    <script src="assets/vendor/qrcode.js?v=20261103_qr"></script>
-
-    <!-- Quiz Engine Script -->
-    <script src="quiz.js?v=20261115_tree_v6"></script>
-
+    <!-- Scripts -->
+    <script src="assets/vendor/qrcode.js"></script>
+    <script src="quiz.js?v=20261119_v3"></script>
 </body>
 
 </html>
-

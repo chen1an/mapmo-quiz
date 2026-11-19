@@ -1,320 +1,405 @@
 /**
- * MapMo - 社群習慣心理測驗 (Social Media Habits Quiz Engine)
- * Decision Tree State Machine, Audio Synthesis, Canvas Exporter, QR Standee
+ * MapMo - 社群派別心理測驗引擎 v2 (11題相似度比對模型 · Google 試算表後台 · 習慣特刊視覺)
+ * Strict implementation of 社群派別心理測驗｜題目與計算邏輯說明 (Q1-Q10 Scored + Q11 Unscored)
  */
 
 (function() {
   'use strict';
 
-  // 1. 測驗題目與樹狀圖定義 (Strict Decision Tree matching PDF)
-  const QUIZ_TREE = {
-    q1: {
-      step: 1,
-      totalSteps: 4,
-      category: 'Step 01 · 紀錄習慣',
-      question: '看到喜歡的風景、美食或日常瞬間，你習慣隨手拍照把它記下來嗎？',
-      options: [
-        {
-          id: 'A',
-          text: '會，習慣隨手拍照把心動的片刻記錄下來 📸',
-          next: 'q2',
-          breadcrumb: '隨手拍照記錄'
-        },
-        {
-          id: 'B',
-          text: '沒有特別習慣，享受當下居多，很少拍照留念 🍃',
-          result: 'lurker',
-          breadcrumb: '享受當下很少拍照'
-        }
-      ]
+  // ─────────────────────────────────────────────────────────
+  // 1. 測驗核心結構：五大派別光譜軸、四個章節引言、Q1-Q11 完整題庫
+  //    光譜順序不可更動：0 潛水 -> 1 備忘錄 -> 2 悄悄 -> 3 精修 -> 4 隨心
+  // ─────────────────────────────────────────────────────────
+  const PERSONA_ORDER = ['lurker', 'diarist', 'stealth', 'curator', 'freespirit'];
+
+  const QUIZ_SECTIONS = {
+    record: {
+      id: 'record',
+      navLabel: '記錄生活',
+      bannerTitle: '一、記錄生活',
+      quote: '先從日常開始，那些讓你停下腳步的小瞬間。'
     },
-    q2: {
-      step: 2,
-      totalSteps: 4,
-      category: 'Step 02 · 分享欲求',
-      question: '紀錄下來的這些片刻，你通常會想發到社群上與大家分享嗎？',
-      options: [
-        {
-          id: 'A',
-          text: '會，想把這些生活切片發到社群上與大家分享 💬',
-          next: 'q3',
-          breadcrumb: '渴望社群分享'
-        },
-        {
-          id: 'B',
-          text: '我喜歡紀錄給自己看，純粹私人留存，不喜歡分享給別人 🔒',
-          result: 'diarist',
-          breadcrumb: '只留給自己看'
-        }
-      ]
+    share: {
+      id: 'share',
+      navLabel: '分享這件事',
+      bannerTitle: '二、分享這件事',
+      quote: '留下來的片刻，你會想讓別人看見嗎？'
     },
-    q3: {
-      step: 3,
-      totalSteps: 4,
-      category: 'Step 03 · 關注焦慮',
-      question: '發文後，你會希望你的追蹤者不要第一時間注意到你的貼文嗎？',
-      options: [
-        {
-          id: 'A',
-          text: '會，不希望追蹤者第一時間注意到，想默默發佈 🤫',
-          result: 'stealth',
-          breadcrumb: '希望避開即時關注'
-        },
-        {
-          id: 'B',
-          text: '我不在意，發了就發了，什麼時候被看到都無所謂 🎈',
-          next: 'q4',
-          breadcrumb: '不在意被何時看見'
-        }
-      ]
+    gaze: {
+      id: 'gaze',
+      navLabel: '別人的眼光',
+      bannerTitle: '三、別人的眼光',
+      quote: '最後，聊聊發出去之後的那些心情。'
     },
-    q4: {
-      step: 4,
-      totalSteps: 4,
-      category: 'Step 04 · 審美與目光',
-      question: '你是否會在意他人眼光，並在發文前再三確認音樂、文案、排版等是否合適？',
-      options: [
-        {
-          id: 'A',
-          text: '我會在意，每次發文都要花很多時間調整音樂、濾鏡、排版與文案 ✨',
-          result: 'curator',
-          breadcrumb: '在意眼光反覆精修'
-        },
-        {
-          id: 'B',
-          text: '我不在意，不介意他人眼光，展現最真實不設限的自己 🚀',
-          result: 'freespirit',
-          breadcrumb: '不介意眼光隨心所欲'
-        }
-      ]
+    closing: {
+      id: 'closing',
+      navLabel: '結尾',
+      bannerTitle: '結尾（不計分）',
+      quote: '最後一題，想像一下就好，沒有標準答案。'
     }
   };
 
-  // 2. 五大社群人格完整設定 (100% 定錨 PDF 內容)
+  // Q1–Q10 計分題（選項順序嚴格依表格，不依分數排序）
+  // types 對照：0=潛水觀察派, 1=備忘錄日記派, 2=悄悄發佈派, 3=精修完美派, 4=隨心所欲派
+  const SCORED_QUESTIONS = [
+    {
+      id: 'Q1',
+      section: 'record',
+      showQuote: true,
+      prompt: '走在路上遇到超美的夕陽，你會？',
+      options: [
+        { letter: 'A', text: '拍下來分享出去', score: 3, types: [2, 3, 4], typesLabel: '悄悄・精修・隨心' },
+        { letter: 'B', text: '看一眼記在心裡就好', score: 1, types: [0], typesLabel: '潛水' },
+        { letter: 'C', text: '拍下來存在相簿，留給自己回味', score: 2, types: [1], typesLabel: '備忘錄' }
+      ]
+    },
+    {
+      id: 'Q2',
+      section: 'record',
+      showQuote: false,
+      prompt: '週末出門玩了一整天，回到家後你最常做的事是？',
+      options: [
+        { letter: 'A', text: '滑手機放鬆，不太會整理照片', score: 1, types: [0], typesLabel: '潛水' },
+        { letter: 'B', text: '整理照片，順便在備忘錄寫幾句心得', score: 2, types: [1], typesLabel: '備忘錄' },
+        { letter: 'C', text: '挑幾張照片，準備發出去', score: 3, types: [2, 3, 4], typesLabel: '悄悄・精修・隨心' }
+      ]
+    },
+    {
+      id: 'Q3',
+      section: 'record',
+      showQuote: false,
+      prompt: '這樣累積下來，打開你的手機相簿，裡面大多是？',
+      options: [
+        { letter: 'A', text: '截圖和工作資料，生活照不多', score: 1, types: [0], typesLabel: '潛水' },
+        { letter: 'B', text: '很多生活照，大多自己看，偶爾分享', score: 2, types: [1, 2], typesLabel: '備忘錄・悄悄' },
+        { letter: 'C', text: '很多生活照，常常拿來發文', score: 3, types: [3, 4], typesLabel: '精修・隨心' }
+      ]
+    },
+    {
+      id: 'Q4',
+      section: 'share',
+      showQuote: true,
+      prompt: '一天結束時，今天的心情和發生的事，通常會留在哪裡？',
+      options: [
+        { letter: 'A', text: '大多已經在限動或貼文上了', score: 3, types: [3, 4], typesLabel: '精修・隨心' },
+        { letter: 'B', text: '不太會特別留下，過了就過了', score: 1, types: [0], typesLabel: '潛水' },
+        { letter: 'C', text: '留在相簿或備忘錄，偶爾挑一些分享', score: 2, types: [1, 2], typesLabel: '備忘錄・悄悄' }
+      ]
+    },
+    {
+      id: 'Q5',
+      section: 'share',
+      showQuote: false,
+      prompt: '想分享一件生活小事的時候，你通常會？',
+      options: [
+        { letter: 'A', text: '很少有想分享的時候，看別人分享比較多', score: 1, types: [0], typesLabel: '潛水' },
+        { letter: 'B', text: '先想想適合放在哪裡、要給誰看', score: 2, types: [1, 2, 3], typesLabel: '備忘錄・悄悄・精修' },
+        { letter: 'C', text: '直接發在限動或貼文，誰看到都可以', score: 3, types: [4], typesLabel: '隨心' }
+      ]
+    },
+    {
+      id: 'Q6',
+      section: 'share',
+      showQuote: false,
+      prompt: '說到發文，從拍照到把貼文發出去，你通常？',
+      options: [
+        { letter: 'A', text: '隨手就發，馬上搞定', score: 3, types: [4], typesLabel: '隨心' },
+        { letter: 'B', text: '會想一下內容，或挑個時間再發', score: 2, types: [2, 3], typesLabel: '悄悄・精修' },
+        { letter: 'C', text: '拍完就停在相簿裡，很少走到發文這一步', score: 1, types: [0, 1], typesLabel: '潛水・備忘錄' }
+      ]
+    },
+    {
+      id: 'Q7',
+      section: 'share',
+      showQuote: false,
+      prompt: '貼文發出去之後，你希望追蹤者第一時間就看到嗎？',
+      options: [
+        { letter: 'A', text: '我很少發文，就算發也是給自己看的', score: 1, types: [0, 1], typesLabel: '潛水・備忘錄' },
+        { letter: 'B', text: '我不希望太快被注意到', score: 2, types: [2], typesLabel: '悄悄' },
+        { letter: 'C', text: '希望有人看到，有回應會很開心', score: 3, types: [3, 4], typesLabel: '精修・隨心' }
+      ]
+    },
+    {
+      id: 'Q8',
+      section: 'gaze',
+      showQuote: true,
+      prompt: '如果這篇貼文沒什麼人按讚，你會？',
+      options: [
+        { letter: 'A', text: '開始想是不是照片、文案或發文時間沒選好', score: 2, types: [3], typesLabel: '精修' },
+        { letter: 'B', text: '無所謂，發出來就好', score: 3, types: [4], typesLabel: '隨心' },
+        { letter: 'C', text: '本來就沒打算讓太多人看到，或根本沒在發', score: 1, types: [0, 1, 2], typesLabel: '潛水・備忘錄・悄悄' }
+      ]
+    },
+    {
+      id: 'Q9',
+      section: 'gaze',
+      showQuote: false,
+      prompt: '如果朋友跟你說，你的貼文「好像跟平常不太一樣」，你會？',
+      options: [
+        { letter: 'A', text: '這種事不太會發生在我身上，我發得很少也很低調', score: 1, types: [0, 1, 2], typesLabel: '潛水・備忘錄・悄悄' },
+        { letter: 'B', text: '不在意，我想發什麼就發什麼', score: 3, types: [4], typesLabel: '隨心' },
+        { letter: 'C', text: '有點在意，會回頭看看這篇是不是跟我平常的風格不搭', score: 2, types: [3], typesLabel: '精修' }
+      ]
+    },
+    {
+      id: 'Q10',
+      section: 'gaze',
+      showQuote: false,
+      prompt: '發文前，你會想到「某些人也會看到」嗎？（像是家人、主管、不太熟的朋友）',
+      options: [
+        { letter: 'A', text: '會想到，所以大多留給自己看就好', score: 1, types: [0, 1], typesLabel: '潛水・備忘錄' },
+        { letter: 'B', text: '不太會，誰看到都沒關係', score: 3, types: [4], typesLabel: '隨心' },
+        { letter: 'C', text: '會想到，所以會設定摯友、隱藏對象，或改一下內容再發', score: 2, types: [2, 3], typesLabel: '悄悄・精修' }
+      ]
+    }
+  ];
+
+  // Q11 不計分結尾題（記錄答案作展板數據）
+  const FINAL_QUESTION = {
+    id: 'Q11',
+    section: 'closing',
+    showQuote: true,
+    prompt: '那如果發文時，完全不用擔心誰會看到，你最想分享什麼？',
+    options: [
+      { letter: 'A', text: '一處讓我停下腳步的風景' },
+      { letter: 'B', text: '一句沒說出口的心情' },
+      { letter: 'C', text: '一段想記住的回憶' },
+      { letter: 'D', text: '一張很喜歡、但一直沒發出去的照片' }
+    ]
+  };
+
+  const ALL_QUESTIONS = SCORED_QUESTIONS.concat([FINAL_QUESTION]);
+
+  // ─────────────────────────────────────────────────────────
+  // 2. 五大社群派別資料定義（對齊 PDF 規格 + 習慣特刊素材 + MapMo 推薦）
+  // ─────────────────────────────────────────────────────────
   const PERSONAS = {
     lurker: {
+      index: 0,
       id: 'lurker',
       name: '潛水觀察派',
-      tagline: '靜默漫遊的城市觀察者',
-      badgeColor: '#4285F4',
-      badgeBg: '#DBE5FC',
-      accentColor: '#2563EB',
-      emotionId: 'sad',
-      emotionLabel: '哀 · 靜謐思緒',
-      soulQuote: '「我不在社群大聲喧嘩，但我比誰都細膩地閱讀著這座城市的喜怒哀樂。」',
-      status: '沒有特別習慣紀錄生活，但是喜歡看熟人或陌生人紀錄的生活。',
-      dimensions: {
-        record: { label: '紀錄生活熱情', value: 18, color: '#4285F4' },
-        awareness: { label: '他人眼光敏感度', value: 20, color: '#9E9E9E' },
-        share: { label: '公開分享欲求', value: 12, color: '#6366F1' }
-      },
-      personalityInsight: '你是最溫柔的城市讀者。比起自己發文成為焦點，你更享受在無壓力的角落默默看著熟人與陌生人的生活切片，在別人的悲歡離合裡捕捉專屬於你的微小共鳴。',
+      shortName: '潛水觀察',
+      enTitle: 'THE SILENT OBSERVER',
+      motto: '不留痕跡，但從沒錯過',
+      traitSummary: '很少記錄、幾乎不發文，主要看別人的生活',
+      typicalScore: 10,
+      barColor: '#2E6295',
+      textColor: '#214A73',
+      charImg: 'assets/personas/lurker-char.png',
+      posterImg: 'assets/personas/lurker-poster.jpg',
+      description: '你習慣站在螢幕這一端，安靜看著大家的生活。不是沒有想法，只是覺得不一定要說出來。',
+      posterObserve: '沒有特別紀錄自己的習慣，卻喜歡看熟人或陌生人的日常。你是社群裡最安靜的讀者，也是最認真的那一位。',
+      emotionLabel: '安靜參與者 · 典型分 10',
       features: {
         primary: [
           {
             name: '情緒地圖',
             icon: 'map-marked-alt',
-            desc: '使用情緒篩選器，默默觀看地圖上各種情緒的貼文，找到有共鳴的回憶。'
+            desc: '用情緒篩選器默默逛逛，找到和你同頻的回憶，完全不用擔心社交壓力。'
           },
           {
-            name: '收藏與AI推播',
+            name: '收藏與 AI 推播',
             icon: 'heart',
-            desc: '把有共鳴的回憶珍藏起來，AI根據你的珍藏推播地圖上其他使用者類似的回憶。'
+            desc: '把有共鳴的城市角落悄悄收藏起來，AI 會推薦地圖上同頻率的生活記憶。'
           }
         ],
         secondary: [
           {
             name: '私人發文',
             icon: 'lock',
-            desc: '即使很少拍照，也可以偶爾隨筆留下只給未來的自己看的安靜足跡。'
+            desc: '哪天突然想留下一句話給未來的自己，也有純私密的座標角落可以安放。'
           }
         ]
       }
     },
 
     diarist: {
+      index: 1,
       id: 'diarist',
       name: '備忘錄日記派',
-      tagline: '與自己對話的心靈收藏家',
-      badgeColor: '#FBBD04',
-      badgeBg: '#FCF4D9',
-      accentColor: '#D97706',
-      emotionId: 'joy',
-      emotionLabel: '喜 · 明亮溫暖',
-      soulQuote: '「生活是過給自己的，每一張照片都是我私密而珍貴的時光標本。」',
-      status: '喜歡紀錄生活，但只喜歡紀錄給自己看，不喜歡分享給別人。',
-      dimensions: {
-        record: { label: '紀錄生活熱情', value: 92, color: '#FBBD04' },
-        awareness: { label: '他人眼光敏感度', value: 15, color: '#9E9E9E' },
-        share: { label: '公開分享欲求', value: 8, color: '#6366F1' }
-      },
-      personalityInsight: '生活是自己的作品集。你的手機相簿裡藏滿了街角的光影、好吃的晚餐與天邊的晚霞，你熱愛記錄每個動人瞬間，但不需要任何人的點讚來證明生活的美好。',
+      shortName: '備忘錄日記',
+      enTitle: 'THE PRIVATE DIARIST',
+      motto: '本日記錄，僅限本人閱讀',
+      traitSummary: '記錄很多，但大多留給自己，偶爾才分享',
+      typicalScore: 15,
+      barColor: '#C85A82',
+      textColor: '#9C3B5F',
+      charImg: 'assets/personas/diarist-char.png',
+      posterImg: 'assets/personas/diarist-poster.jpg',
+      description: '你的相簿和備忘錄藏著滿滿的生活。記錄是為了自己，分享反而是偶爾的事。',
+      posterObserve: '習慣把生活一筆筆記下，但只寫給自己看。比起按讚數，你更在意多年後翻回來時，還記得當時的心情。',
+      emotionLabel: '私密收藏家 · 典型分 15',
       features: {
         primary: [
           {
             name: '私人發文',
             icon: 'lock',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。讓只想紀錄，不想分享的生活也有地方安放。'
+            desc: '只想記錄、不想分享的日子，在地圖上好好安放當下的心情與座標，日後回顧更具體。'
           }
         ],
         secondary: [
           {
             name: '情緒地圖',
             icon: 'map-marked-alt',
-            desc: '使用情緒篩選器，默默觀看地圖上各種情緒的貼文，找到有共鳴的回憶。'
+            desc: '偶爾散步看別人留下的真實切片，不留言、不按讚，維持舒服的距離感。'
           },
           {
-            name: '收藏與AI推播',
+            name: '收藏與 AI 推播',
             icon: 'heart',
-            desc: '把有共鳴的回憶珍藏起來，AI根據你的珍藏推播地圖上其他使用者類似的回憶。'
+            desc: '把觸動你的照片收進口袋，找回當時在街角遇見自己的感動。'
           }
         ]
       }
     },
 
     stealth: {
+      index: 2,
       id: 'stealth',
       name: '悄悄發佈派',
-      tagline: '避開聚光燈的溫柔低語者',
-      badgeColor: '#F48FB1',
-      badgeBg: '#FDE4EF',
-      accentColor: '#BE185D',
-      emotionId: 'fun',
-      emotionLabel: '樂 · 舒心雀躍',
-      soulQuote: '「我想向世界敞開一扇窗，但只想在無人緊迫盯人的角落，靜靜等待懂我的人。」',
-      status: '喜歡紀錄生活，喜歡分享，但不希望追蹤者第一時間注意到你的貼文，喜歡默默分享。',
-      dimensions: {
-        record: { label: '紀錄生活熱情', value: 88, color: '#F48FB1' },
-        awareness: { label: '他人眼光敏感度', value: 78, color: '#EA4335' },
-        share: { label: '公開分享欲求', value: 72, color: '#6366F1' }
-      },
-      personalityInsight: '你渴望被理解，卻又恐懼被熟人目光審視。你經常在深夜發文、或是把摯友清單刪改好幾次。MapMo 的全匿名地理發布，正是為你量身打造的社交解藥——在沒有人認識你的地圖上，放下所有包袱大膽呼吸。',
+      shortName: '悄悄發佈',
+      enTitle: 'THE QUIET POSTER',
+      motto: '發了，但希望你晚點再看到',
+      traitSummary: '想分享，但不想太快被注意，會用小帳、摯友控制誰看得到',
+      typicalScore: 20,
+      barColor: '#D96846',
+      textColor: '#B54728',
+      charImg: 'assets/personas/stealth-char.png',
+      posterImg: 'assets/personas/stealth-poster.jpg',
+      description: '你想分享，但更想決定誰能看到。小帳、摯友、限動，是你和世界保持剛好距離的方式。',
+      posterObserve: '熱愛記錄，也想分享，卻不希望被第一時間注意到。貼文像夾在書頁裡的小紙條，等對的人慢慢翻到。',
+      emotionLabel: '低調發佈者 · 典型分 20',
       features: {
         primary: [
           {
             name: '匿名分享',
             icon: 'user-secret',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。安心分享每一則純粹紀錄的生活和感受在Mapmo平台上，讓路過的Mapmo使用者找到與你的共鳴。'
+            desc: '不必擔心被誰第一眼看見，安心把生活放上地圖，讓路過的有緣人自然發現共鳴。'
           },
           {
             name: '私人發文',
             icon: 'lock',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。讓只想紀錄，不想分享的生活也有地方安放。'
+            desc: '有些只說一半的心事，自由切換成私密紀錄，不必費心篩選摯友名單。'
           }
         ],
         secondary: [
           {
             name: '情緒地圖',
             icon: 'map-marked-alt',
-            desc: '使用情緒篩選器，默默觀看地圖上各種情緒的貼文，找到有共鳴的回憶。'
-          },
-          {
-            name: '收藏與AI推播',
-            icon: 'heart',
-            desc: '把有共鳴的回憶珍藏起來，AI根據你的珍藏推播地圖上其他使用者類似的回憶。'
+            desc: '沒有通知轟炸與時間序緊迫感，一切在情緒地圖上自在發酵。'
           }
         ]
       }
     },
 
     curator: {
+      index: 3,
       id: 'curator',
       name: '精修完美派',
-      tagline: '雕琢生活溫度的美學策展人',
-      badgeColor: '#1C1C1E',
-      badgeBg: '#E5E5EA',
-      accentColor: '#6366F1',
-      emotionId: 'angry',
-      emotionLabel: '真 · 稜角美學',
-      soulQuote: '「不是愛做作，而是每一格畫面、每一句文案，都該對得起按下快門那一刻的心動。」',
-      status: '喜歡紀錄生活，喜歡分享，不會太在意別人是否第一時間注意到你的貼文，但在意別人會怎麼看，發文前會花很多時間在音樂、濾鏡、排版、文案等內容。',
-      dimensions: {
-        record: { label: '紀錄生活熱情', value: 96, color: '#1C1C1E' },
-        awareness: { label: '他人眼光敏感度', value: 92, color: '#EA4335' },
-        share: { label: '公開分享欲求', value: 86, color: '#6366F1' }
-      },
-      personalityInsight: '你是具有極高審美要求的策展型靈魂。發一則貼文常常要精修半小時、甚至因為文案不夠好而忍痛放棄。但請記得，真實的你已經足夠動人。MapMo 讓你的精緻被懂你的人看見，也讓你的脆弱有私人樹洞溫柔安放。',
+      shortName: '精修完美',
+      enTitle: 'THE PERFECTIONIST EDITOR',
+      motto: '一則貼文，修了三個晚上',
+      traitSummary: '常發文，在意呈現效果、讚數和別人的反應',
+      typicalScore: 25,
+      barColor: '#D4931D',
+      textColor: '#986307',
+      charImg: 'assets/personas/curator-char.png',
+      posterImg: 'assets/personas/curator-poster.jpg',
+      description: '你在乎每一篇貼文呈現出來的樣子，照片、文案、時間都想做到最好，因為那代表你。',
+      posterObserve: '喜歡記錄也樂於分享，很在意別人怎麼看。音樂、濾鏡、排版、文案，每個細節都要確認再三才按下發佈。',
+      emotionLabel: '細節策展人 · 典型分 25',
       features: {
         primary: [
           {
             name: '匿名分享',
             icon: 'user-secret',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。安心分享每一則純粹紀錄的生活和感受在Mapmo平台上，讓路過的Mapmo使用者找到與你的共鳴。'
+            desc: '卸下被評價與讚數審視的壓力，不用完美也能被理解。還在修的半成品，也有地方安放。'
           },
           {
             name: '私人發文',
             icon: 'lock',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。讓只想紀錄，不想分享的生活也有地方安放。'
+            desc: '那些捨不得發出去的真實毛邊與備忘瞬間，私密收藏起來也很珍貴。'
           }
         ],
         secondary: [
           {
-            name: '情緒地圖',
-            icon: 'map-marked-alt',
-            desc: '使用情緒篩選器，默默觀看地圖上各種情緒的貼文，找到有共鳴的回憶。'
-          },
-          {
-            name: '收藏與AI推播',
+            name: '收藏與 AI 推播',
             icon: 'heart',
-            desc: '把有共鳴的回憶珍藏起來，AI根據你的珍藏推播地圖上其他使用者類似的回憶。'
+            desc: '依你的視覺偏好與情緒脈絡，在地圖上遇見欣賞同種美感的陌生旅人。'
           }
         ]
       }
     },
 
     freespirit: {
+      index: 4,
       id: 'freespirit',
       name: '隨心所欲派',
-      tagline: '率真自由的真實生活家',
-      badgeColor: '#30D158',
-      badgeBg: '#E8FBEB',
-      accentColor: '#EA4335',
-      emotionId: 'joy',
-      emotionLabel: '喜與樂 · 自由肆意',
-      soulQuote: '「不迎合、不討好、不設限！這就是最真實、最滾燙、最不加濾鏡的我。」',
-      status: '喜歡紀錄生活，喜歡分享，不介意他人眼光，展現最真實不設限的自己。',
-      dimensions: {
-        record: { label: '紀錄生活熱情', value: 85, color: '#30D158' },
-        awareness: { label: '他人眼光敏感度', value: 10, color: '#9E9E9E' },
-        share: { label: '公開分享欲求', value: 95, color: '#EA4335' }
-      },
-      personalityInsight: '你是社群裡稀缺的明朗太陽。你不被世俗定義拘束，想到什麼拍什麼、想說什麼說什麼。你的坦蕩與純粹，能為路過你足跡的每個孤單靈魂注入滿滿的元氣！',
+      shortName: '隨心所欲',
+      enTitle: 'THE FREE SPIRIT',
+      motto: '想發就發，從不設限',
+      traitSummary: '常發文，想發就發，不太在意別人怎麼看',
+      typicalScore: 30,
+      barColor: '#4A5450',
+      textColor: '#2B3330',
+      charImg: 'assets/personas/freespirit-char.png',
+      posterImg: 'assets/personas/freespirit-poster.jpg',
+      description: '想發就發，不太被數字和眼光綁住。社群對你來說就是生活的一部分，自然就好。',
+      posterObserve: '喜歡記錄、喜歡分享，不介意他人眼光。你展現的是最真實、不設限的自己，動態就是生活本身。',
+      emotionLabel: '率真生活家 · 典型分 30',
       features: {
         primary: [
           {
             name: '匿名分享',
             icon: 'user-secret',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。安心分享每一則純粹紀錄的生活和感受在Mapmo平台上，讓路過的Mapmo使用者找到與你的共鳴。'
+            desc: '把當下最真實的心情直接放上地圖，不用管演算法，讓路過城市的人與你的熱度共鳴。'
           }
         ],
         secondary: [
           {
-            name: '私人發文',
-            icon: 'lock',
-            desc: '紀錄生活與情緒，讓日後回顧這些回憶可以更具體。讓只想紀錄，不想分享的生活也有地方安放。'
-          },
-          {
             name: '情緒地圖',
             icon: 'map-marked-alt',
-            desc: '使用情緒篩選器，默默觀看地圖上各種情緒的貼文，找到有共鳴的回憶。'
+            desc: '到處看看這座城市現在正發生哪些不加修飾的鮮活故事。'
           },
           {
-            name: '收藏與AI推播',
+            name: '收藏與 AI 推播',
             icon: 'heart',
-            desc: '把有共鳴的回憶珍藏起來，AI根據你的珍藏推播地圖上其他使用者類似的回憶。'
+            desc: '收藏喜歡的視角，隨時發現身邊同樣鮮活的生活角落。'
           }
         ]
       }
     }
   };
 
-  // 3. 狀態管理器
-  let currentQuestionId = 'q1';
-  let historyStack = []; // 歷程返回堆疊
-  let currentResult = null;
-  let isSoundEnabled = true;
+  // ─────────────────────────────────────────────────────────
+  // 3. 狀態與後端常數
+  // ─────────────────────────────────────────────────────────
+  const GOOGLE_SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbzslwCHEPOq9aAnqBT-LUNETzH8rQCawGeT1V_u3ge6u5-DT56krRgk0VYcQr7a_tU/exec';
+  const FIXED_QUIZ_GITHUB_URL = 'https://chen1an.github.io/mapmo-quiz/';
+  const PENDING_SYNC_STORAGE_KEY = '@mapmo_quiz_pending_v3';
+  const WEBHOOK_STORAGE_KEY = '@mapmo_quiz_sheets_webhook_v2';
+  const LOCAL_CACHE_STATS_KEY = '@mapmo_quiz_cached_stats_v3';
+  const LOCAL_RECORDS_STORAGE_KEY = '@mapmo_quiz_local_records_v3';
 
-  // 4. Web Audio API 音效合成引擎 (零依賴純程式音效)
+  let currentIndex = 0;       // 0..10 (Q1..Q11)
+  let userAnswers = new Array(11).fill(null); // 儲存各題所選索引 0..2 / 0..3
+  let currentEvaluation = null; // 完整判定物件
+  let currentRunSerial = '';
+  let hasSubmittedCurrentRun = false;
+  let isSoundEnabled = true;
+  let activeQrStudioTab = 'tree';
+
+  const statsState = {
+    summary: { total: 0, lurker: 0, diarist: 0, stealth: 0, curator: 0, freespirit: 0 },
+    records: [],
+    isConfigured: true,
+    isOnline: false,
+    isSyncing: true,
+    isLoadingRecords: false
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // 4. Web Audio API 音效合成
+  // ─────────────────────────────────────────────────────────
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
@@ -333,7 +418,6 @@
       if (!ctx) return;
       const now = ctx.currentTime;
 
-      // 輔助：合成樹葉沙沙聲 (Filtered White Noise)
       const playLeafRustle = (duration = 0.38, peakGain = 0.08, filterFreq = 1600) => {
         const bufferSize = Math.floor(ctx.sampleRate * duration);
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -364,7 +448,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(480, now);
         osc.frequency.exponentialRampToValueAtTime(720, now + 0.08);
-        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.setValueAtTime(0.11, now);
         gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -375,24 +459,22 @@
         const gain = ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(280, now);
-        osc.frequency.exponentialRampToValueAtTime(540, now + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.14);
         gain.gain.setValueAtTime(0.08, now);
-        gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.14);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.15);
+        osc.stop(now + 0.14);
       } else if (type === 'treeToQr') {
-        // 樹葉飄落化為 QR 磚塊：清脆樹葉沙沙聲 + 下行接上行的水晶木琴琶音
         playLeafRustle(0.52, 0.09, 1900);
-        const notes = [880, 783.99, 659.25, 587.33, 523.25, 1046.5];
-        notes.forEach((freq, i) => {
+        [880, 783.99, 659.25, 587.33, 523.25, 1046.5].forEach((freq, i, arr) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          osc.type = i === notes.length - 1 ? 'sine' : 'triangle';
+          osc.type = i === arr.length - 1 ? 'sine' : 'triangle';
           const t0 = now + i * 0.055;
           osc.frequency.setValueAtTime(freq, t0);
-          gain.gain.setValueAtTime(0.11, t0);
+          gain.gain.setValueAtTime(0.1, t0);
           gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -400,28 +482,14 @@
           osc.stop(t0 + 0.25);
         });
       } else if (type === 'qrToTree') {
-        // QR 磚塊升起綻放成大樹：溫潤木質基底音 + 向上綻放豎琴和弦 + 微風樹葉聲
         playLeafRustle(0.48, 0.07, 1400);
-        const woodOsc = ctx.createOscillator();
-        const woodGain = ctx.createGain();
-        woodOsc.type = 'sine';
-        woodOsc.frequency.setValueAtTime(160, now);
-        woodOsc.frequency.exponentialRampToValueAtTime(310, now + 0.14);
-        woodGain.gain.setValueAtTime(0.15, now);
-        woodGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        woodOsc.connect(woodGain);
-        woodGain.connect(ctx.destination);
-        woodOsc.start(now);
-        woodOsc.stop(now + 0.17);
-
-        const bloomNotes = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
-        bloomNotes.forEach((freq, i) => {
+        [523.25, 587.33, 659.25, 783.99, 880, 1046.5].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
           const t0 = now + 0.04 + i * 0.052;
           osc.frequency.setValueAtTime(freq, t0);
-          gain.gain.setValueAtTime(0.095, t0);
+          gain.gain.setValueAtTime(0.09, t0);
           gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -430,13 +498,8 @@
         });
       } else if (type === 'seasonChange') {
         playLeafRustle(0.28, 0.06, 2100);
-        const chords = [
-          [659.25, 880, 1046.5],   // Spring: 明亮鳥鳴三音
-          [523.25, 659.25, 783.99], // Summer: 飽滿陽光大三和弦
-          [440, 554.37, 659.25]     // Autumn: 溫潤秋日木質和弦
-        ];
-        const notes = chords[extraIndex % 3] || chords[0];
-        notes.forEach((freq, i) => {
+        const chords = [[659.25, 880, 1046.5], [523.25, 659.25, 783.99], [440, 554.37, 659.25]];
+        (chords[extraIndex % 3] || chords[0]).forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'triangle';
@@ -457,16 +520,14 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(f * 0.85, now);
         osc.frequency.exponentialRampToValueAtTime(f * 1.15, now + 0.09);
-        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.setValueAtTime(0.11, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.15);
       } else if (type === 'success') {
-        // 和弦音效 C5, E5, G5, C6
-        const freqs = [523.25, 659.25, 783.99, 1046.50];
-        freqs.forEach((f, idx) => {
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
@@ -482,18 +543,22 @@
     } catch (_) {}
   }
 
-  // 5. DOM 元素快取
+  // ─────────────────────────────────────────────────────────
+  // 5. DOM 快取與啟動初始化
+  // ─────────────────────────────────────────────────────────
   let screenStart, screenQuiz, screenAnalyzing, screenResult;
-  let qProgressFill, qStepIndicator, qBackBtn, qBreadcrumbTracker;
-  let qCategoryTag, qPromptText, qOptionsContainer;
-  let standeeModal, standeeQrHolder, cardFooterQrHolder;
-  let soundToggleBtn, standeeOpenBtn;
+  let qProgressFill, qProgressBarRole, qStepIndicator, qSectionLabel, qBackBtn;
+  let qSectionQuoteBanner, qSectionQuoteTitle, qSectionQuoteText;
+  let qPromptText, qOptionsContainer;
+  let standeeModal, adminModal, standeeQrHolder, cardFooterQrHolder;
+  let soundToggleBtn, standeeOpenBtn, adminOpenBtn;
 
-  // 6. 初始化進入點
   document.addEventListener('DOMContentLoaded', () => {
     cacheDOMElements();
+    initDialogFallbacks();
     bindEvents();
     renderFixedQRCodes();
+    initBackendAndStats();
   });
 
   function cacheDOMElements() {
@@ -503,23 +568,76 @@
     screenResult = document.getElementById('screenResult');
 
     qProgressFill = document.getElementById('qProgressFill');
+    qProgressBarRole = document.getElementById('qProgressBarRole');
     qStepIndicator = document.getElementById('qStepIndicator');
+    qSectionLabel = document.getElementById('qSectionLabel');
     qBackBtn = document.getElementById('qBackBtn');
-    qBreadcrumbTracker = document.getElementById('qBreadcrumbTracker');
-    qCategoryTag = document.getElementById('qCategoryTag');
+
+    qSectionQuoteBanner = document.getElementById('qSectionQuoteBanner');
+    qSectionQuoteTitle = document.getElementById('qSectionQuoteTitle');
+    qSectionQuoteText = document.getElementById('qSectionQuoteText');
+
     qPromptText = document.getElementById('qPromptText');
     qOptionsContainer = document.getElementById('qOptionsContainer');
 
     standeeModal = document.getElementById('standeeModal');
+    adminModal = document.getElementById('adminModal');
     standeeQrHolder = document.getElementById('standeeQrHolder');
     cardFooterQrHolder = document.getElementById('cardFooterQrHolder');
 
     soundToggleBtn = document.getElementById('soundToggleBtn');
     standeeOpenBtn = document.getElementById('standeeOpenBtn');
+    adminOpenBtn = document.getElementById('adminOpenBtn');
+  }
+
+  // Native <dialog closedby="any"> fallback + <dialog> animation cleanup
+  function initDialogFallbacks() {
+    if (standeeModal) {
+      standeeModal.addEventListener('close', () => {
+        if (treeQrState.animFrameId) {
+          cancelAnimationFrame(treeQrState.animFrameId);
+          treeQrState.animFrameId = null;
+        }
+        document.body.classList.remove('print-bw-qr');
+      });
+    }
+
+    if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)) {
+      const isOutsideBox = (e, dialog) => {
+        const box = dialog.querySelector('.standee-modal-box') || dialog;
+        const r = box.getBoundingClientRect();
+        return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+      };
+      document.querySelectorAll('dialog[closedby="any"]').forEach((dialog) => {
+        let pressedOutside = false;
+        dialog.addEventListener('pointerdown', (e) => { pressedOutside = isOutsideBox(e, dialog); });
+        dialog.addEventListener('pointerup', (e) => {
+          if (pressedOutside && isOutsideBox(e, dialog)) dialog.close();
+          pressedOutside = false;
+        });
+      });
+    }
+  }
+
+  function navigateWithTransition(updateDOM, direction = 'forward') {
+    if (typeof document.startViewTransition !== 'function') {
+      updateDOM();
+      return;
+    }
+    const supportsTyped = typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
+      && CSS.supports('selector(:active-view-transition-type(forward))');
+    try {
+      if (supportsTyped) {
+        document.startViewTransition({ update: updateDOM, types: [direction] });
+      } else {
+        document.startViewTransition(updateDOM);
+      }
+    } catch (_) {
+      updateDOM();
+    }
   }
 
   function bindEvents() {
-    // 開始測驗
     const startBtn = document.getElementById('startQuizBtn');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
@@ -528,7 +646,6 @@
       });
     }
 
-    // 回上一題
     if (qBackBtn) {
       qBackBtn.addEventListener('click', () => {
         playSound('whoosh');
@@ -536,7 +653,6 @@
       });
     }
 
-    // 重新測驗
     const restartBtn = document.getElementById('btnRestartQuiz');
     if (restartBtn) {
       restartBtn.addEventListener('click', () => {
@@ -545,35 +661,92 @@
       });
     }
 
-    // 複製連結
     const copyLinkBtn = document.getElementById('btnCopyQuizLink');
     if (copyLinkBtn) {
-      copyLinkBtn.addEventListener('click', () => {
-        copyQuizLink();
-      });
+      copyLinkBtn.addEventListener('click', () => copyQuizLink());
     }
 
-    // 下載結果圖片 (2X Retina Canvas)
     const downloadImgBtn = document.getElementById('btnDownloadResultImg');
     if (downloadImgBtn) {
-      downloadImgBtn.addEventListener('click', () => {
-        exportResultCardImage();
+      downloadImgBtn.addEventListener('click', () => exportResultCardImage());
+    }
+
+    const downloadPosterBtn = document.getElementById('btnDownloadZinePoster');
+    if (downloadPosterBtn) {
+      downloadPosterBtn.addEventListener('click', () => downloadZinePosterFile());
+    }
+
+    const openQrResultBtn = document.getElementById('btnOpenQrFromResult');
+    if (openQrResultBtn) {
+      openQrResultBtn.addEventListener('click', () => {
+        playSound('tap');
+        openStandeeModal();
       });
     }
 
-    // 音效切換
     if (soundToggleBtn) {
       soundToggleBtn.addEventListener('click', () => {
         isSoundEnabled = !isSoundEnabled;
         soundToggleBtn.innerHTML = isSoundEnabled
-          ? '<i class="fas fa-volume-up"></i> 音效開啟'
-          : '<i class="fas fa-volume-mute"></i> 音效關閉';
+          ? '<i class="fas fa-volume-up" aria-hidden="true"></i><span class="pill-label-full"> 音效</span>'
+          : '<i class="fas fa-volume-mute" aria-hidden="true"></i><span class="pill-label-full"> 靜音</span>';
+        soundToggleBtn.setAttribute('aria-pressed', String(isSoundEnabled));
         soundToggleBtn.classList.toggle('active', isSoundEnabled);
         if (isSoundEnabled) playSound('tap');
       });
     }
 
-    // 展覽立牌 Modal 彈窗開關
+    const btnOpenTreeHome = document.getElementById('btnOpenTreeQrFromHome');
+    if (btnOpenTreeHome) {
+      btnOpenTreeHome.addEventListener('click', () => {
+        playSound('tap');
+        openStandeeModal('tree');
+      });
+    }
+
+    const btnOpenBwHome = document.getElementById('btnOpenBwQrFromHome');
+    if (btnOpenBwHome) {
+      btnOpenBwHome.addEventListener('click', () => {
+        playSound('tap');
+        openStandeeModal('bw');
+      });
+    }
+
+    const btnOpenAdminHome = document.getElementById('btnOpenAdminFromHome');
+    if (btnOpenAdminHome) {
+      btnOpenAdminHome.addEventListener('click', () => {
+        playSound('tap');
+        openAdminModal();
+      });
+    }
+
+    if (adminOpenBtn) {
+      adminOpenBtn.addEventListener('click', () => {
+        playSound('tap');
+        openAdminModal();
+      });
+    }
+
+    const adminCloseBtn = document.getElementById('adminCloseBtn');
+    if (adminCloseBtn) {
+      adminCloseBtn.addEventListener('click', () => closeAdminModal());
+    }
+
+    const tabTreeQrBtn = document.getElementById('tabTreeQrBtn');
+    const tabBwQrBtn = document.getElementById('tabBwQrBtn');
+    if (tabTreeQrBtn) {
+      tabTreeQrBtn.addEventListener('click', () => {
+        playSound('tap');
+        switchQrStudioTab('tree');
+      });
+    }
+    if (tabBwQrBtn) {
+      tabBwQrBtn.addEventListener('click', () => {
+        playSound('tap');
+        switchQrStudioTab('bw');
+      });
+    }
+
     if (standeeOpenBtn) {
       standeeOpenBtn.addEventListener('click', () => {
         playSound('tap');
@@ -583,277 +756,360 @@
 
     const standeeCloseBtn = document.getElementById('standeeCloseBtn');
     if (standeeCloseBtn) {
-      standeeCloseBtn.addEventListener('click', () => {
-        closeStandeeModal();
-      });
+      standeeCloseBtn.addEventListener('click', () => closeStandeeModal());
     }
 
-    if (standeeModal) {
-      standeeModal.addEventListener('click', (e) => {
-        if (e.target === standeeModal) closeStandeeModal();
-      });
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && standeeModal && standeeModal.classList.contains('open')) {
-        closeStandeeModal();
-      }
-    });
-
-    // 立牌直接列印
     const btnPrintStandee = document.getElementById('btnPrintStandee');
     if (btnPrintStandee) {
       btnPrintStandee.addEventListener('click', () => {
-        // 列印前確保切換至正面可掃描之像素花園 QR Code 模式
+        document.body.classList.remove('print-bw-qr');
         setTreeQrMode('qr', true);
+        setTimeout(() => window.print(), 120);
+      });
+    }
+
+    const bwUrlInput = document.getElementById('bwQrUrlInput');
+    const bwTitleInput = document.getElementById('bwQrTitleInput');
+    const treeUrlInput = document.getElementById('treeQrUrlInput');
+    if (bwUrlInput) {
+      bwUrlInput.addEventListener('input', () => {
+        const val = bwUrlInput.value.trim() || FIXED_QUIZ_GITHUB_URL;
+        if (treeUrlInput) treeUrlInput.value = val;
+        treeQrState.url = val;
+        rebuildQrAndTreeGeometry(val);
+        renderBwQrCanvas();
+        renderCardFooterQR();
+      });
+    }
+    if (bwTitleInput) {
+      bwTitleInput.addEventListener('input', () => {
+        const titleEl = document.getElementById('bwPrintTitleDisplay');
+        if (titleEl) {
+          titleEl.textContent = bwTitleInput.value.trim() || '掃描測出你的社群派別';
+        }
+      });
+    }
+
+    const btnDownloadBwRawQr = document.getElementById('btnDownloadBwRawQr');
+    if (btnDownloadBwRawQr) btnDownloadBwRawQr.addEventListener('click', () => downloadBwRawQrPng());
+
+    const btnDownloadBwPoster = document.getElementById('btnDownloadBwPoster');
+    if (btnDownloadBwPoster) btnDownloadBwPoster.addEventListener('click', () => downloadBwPosterPng());
+
+    const btnPrintBwStandee = document.getElementById('btnPrintBwStandee');
+    if (btnPrintBwStandee) {
+      btnPrintBwStandee.addEventListener('click', () => {
+        renderBwQrCanvas();
+        document.body.classList.add('print-bw-qr');
+        const cleanup = () => document.body.classList.remove('print-bw-qr');
+        window.addEventListener('afterprint', cleanup, { once: true });
         setTimeout(() => {
           window.print();
-        }, 120);
+          setTimeout(cleanup, 1500);
+        }, 100);
       });
     }
 
-    // 立牌下載高解析像素花園 QR Code
+    bindAdminEvents();
+
     const btnDownloadQR = document.getElementById('btnDownloadQR');
-    if (btnDownloadQR) {
-      btnDownloadQR.addEventListener('click', () => {
-        downloadPureQRCode();
-      });
-    }
+    if (btnDownloadQR) btnDownloadQR.addEventListener('click', () => downloadPureQRCode());
 
-    // 下載當前畫面 (3D 小樹或 QR Code)
     const btnDownloadTreeView = document.getElementById('btnDownloadTreeView');
-    if (btnDownloadTreeView) {
-      btnDownloadTreeView.addEventListener('click', () => {
-        downloadCurrentTreeCanvas();
-      });
-    }
+    if (btnDownloadTreeView) btnDownloadTreeView.addEventListener('click', () => downloadCurrentTreeCanvas());
 
-    // 初始化 3D 情緒樹 ⇄ 像素花園 QR Code 互動工作室
     initTreeQrStudio();
-
-    // 行動版漢堡選單切換
-    const menuToggle = document.getElementById('menuToggle');
-    const navLinks = document.getElementById('navLinks');
-    if (menuToggle && navLinks) {
-      menuToggle.addEventListener('click', () => {
-        navLinks.classList.toggle('active');
-        navLinks.classList.toggle('open');
-      });
-    }
   }
 
-  // 7. 流程切換核心
-  function switchScreen(targetScreen) {
-    [screenStart, screenQuiz, screenAnalyzing, screenResult].forEach(s => {
-      if (s) {
-        s.classList.remove('active');
-        s.style.display = 'none';
-      }
+  // ─────────────────────────────────────────────────────────
+  // 6. 測驗狀態流轉與精準相似度判定邏輯 (Verbatim PDF Spec)
+  // ─────────────────────────────────────────────────────────
+  function setActiveScreen(targetScreen) {
+    [screenStart, screenQuiz, screenAnalyzing, screenResult].forEach((s) => {
+      if (s) s.classList.toggle('active', s === targetScreen);
     });
-
-    if (targetScreen) {
-      targetScreen.style.display = 'flex';
-      setTimeout(() => {
-        targetScreen.classList.add('active');
-      }, 20);
-    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   function startQuiz() {
-    currentQuestionId = 'q1';
-    historyStack = [];
-    currentResult = null;
-    switchScreen(screenQuiz);
-    renderQuestion(currentQuestionId);
+    currentIndex = 0;
+    userAnswers = new Array(11).fill(null);
+    currentEvaluation = null;
+    currentRunSerial = '';
+    hasSubmittedCurrentRun = false;
+    document.title = '測驗進行中 · 你是哪一種社群派？ | MapMo';
+
+    navigateWithTransition(() => {
+      setActiveScreen(screenQuiz);
+      renderCurrentQuestion();
+    }, 'forward');
   }
 
   function restartQuiz() {
-    switchScreen(screenStart);
+    document.title = '你是哪一種社群派？ | MapMo 社群心理測驗';
+    navigateWithTransition(() => {
+      setActiveScreen(screenStart);
+    }, 'backward');
   }
 
-  function renderQuestion(qId) {
-    const qData = QUIZ_TREE[qId];
-    if (!qData) return;
+  function renderCurrentQuestion() {
+    const q = ALL_QUESTIONS[currentIndex];
+    if (!q) return;
 
-    currentQuestionId = qId;
+    const sectionMeta = QUIZ_SECTIONS[q.section];
+    const progressPct = Math.round(((currentIndex + 1) / ALL_QUESTIONS.length) * 100);
+    if (qProgressFill) qProgressFill.style.width = `${progressPct}%`;
+    if (qProgressBarRole) qProgressBarRole.setAttribute('aria-valuenow', String(progressPct));
+    if (qStepIndicator) qStepIndicator.textContent = `${currentIndex + 1} / ${ALL_QUESTIONS.length}`;
+    if (qSectionLabel && sectionMeta) qSectionLabel.textContent = sectionMeta.navLabel;
 
-    // 進度條
-    const percent = ((qData.step - 1) / qData.totalSteps) * 100 + 25;
-    if (qProgressFill) qProgressFill.style.width = `${Math.min(100, percent)}%`;
-    if (qStepIndicator) qStepIndicator.textContent = `Q${qData.step} / ${qData.totalSteps}`;
-
-    // 返回按鈕狀態
-    if (qBackBtn) {
-      qBackBtn.style.visibility = historyStack.length > 0 ? 'visible' : 'hidden';
+    // 僅在各章節第一題 (Q1, Q4, Q8, Q11) 呈現內嵌章節引言
+    if (qSectionQuoteBanner && sectionMeta) {
+      if (q.showQuote) {
+        qSectionQuoteBanner.hidden = false;
+        if (qSectionQuoteTitle) qSectionQuoteTitle.textContent = sectionMeta.bannerTitle;
+        if (qSectionQuoteText) qSectionQuoteText.textContent = sectionMeta.quote;
+      } else {
+        qSectionQuoteBanner.hidden = true;
+      }
     }
 
-    // 決策路徑追蹤 (Breadcrumbs)
-    renderBreadcrumbs();
+    if (qPromptText) qPromptText.textContent = q.prompt;
 
-    // 題目文案
-    if (qCategoryTag) qCategoryTag.textContent = qData.category;
-    if (qPromptText) qPromptText.textContent = qData.question;
+    if (qBackBtn) {
+      qBackBtn.style.visibility = currentIndex > 0 ? 'visible' : 'hidden';
+      qBackBtn.disabled = currentIndex === 0;
+    }
 
-    // 選項渲染
     if (qOptionsContainer) {
       qOptionsContainer.innerHTML = '';
-      qData.options.forEach((opt, idx) => {
+      const prevIdx = userAnswers[currentIndex];
+      q.options.forEach((opt, optIdx) => {
         const btn = document.createElement('button');
-        btn.className = 'quiz-option-btn';
+        btn.type = 'button';
+        btn.className = 'quiz-option-btn' + (prevIdx === optIdx ? ' selected-prev' : '');
         btn.innerHTML = `
           <div class="quiz-option-content">
-            <div class="quiz-option-badge">${opt.id}</div>
-            <div class="quiz-option-text">${opt.text}</div>
+            <span class="quiz-option-badge">${escapeHtml(opt.letter)}</span>
+            <span class="quiz-option-text">${escapeHtml(opt.text)}</span>
           </div>
-          <div class="quiz-option-arrow"><i class="fas fa-chevron-right"></i></div>
         `;
-        btn.addEventListener('click', () => {
-          handleOptionSelect(qId, opt);
-        });
+        btn.addEventListener('click', () => handleOptionSelect(optIdx));
         qOptionsContainer.appendChild(btn);
       });
     }
   }
 
-  function handleOptionSelect(qId, option) {
+  function handleOptionSelect(optIdx) {
     playSound('tap');
+    userAnswers[currentIndex] = optIdx;
 
-    // 記錄歷程
-    historyStack.push({
-      questionId: qId,
-      optionId: option.id,
-      breadcrumb: option.breadcrumb
-    });
-
-    if (option.next) {
-      // 進入下一題
-      playSound('whoosh');
-      renderQuestion(option.next);
-    } else if (option.result) {
-      // 命中結果！進入演算過渡
-      triggerAnalyzing(option.result);
+    if (currentIndex < ALL_QUESTIONS.length - 1) {
+      currentIndex += 1;
+      navigateWithTransition(() => renderCurrentQuestion(), 'forward');
+    } else {
+      triggerAnalyzing();
     }
   }
 
   function goBackStep() {
-    if (historyStack.length === 0) return;
-    const last = historyStack.pop();
-    renderQuestion(last.questionId);
+    if (currentIndex <= 0) return;
+    currentIndex -= 1;
+    navigateWithTransition(() => renderCurrentQuestion(), 'backward');
   }
 
-  function renderBreadcrumbs() {
-    if (!qBreadcrumbTracker) return;
-    if (historyStack.length === 0) {
-      qBreadcrumbTracker.innerHTML = '<span class="path-node">測驗起點</span> <span class="path-arrow">➔</span> <span class="path-node" style="color: #6366F1;">探索中...</span>';
-      return;
+  /**
+   * 嚴格依據 PDF 計分演算法判定主派別、次要影子 (>=70%) 與相似度百分比
+   * @param {number[]} answers - 長度至少 10 的選項索引陣列 (Q1..Q10)
+   * @param {number|null} q11Idx - Q11 所選索引 (0..3)
+   */
+  function evaluateQuizResult(answers, q11Idx) {
+    let total = 0;
+    const match = [0, 0, 0, 0, 0];
+
+    for (let n = 0; n < SCORED_QUESTIONS.length; n++) {
+      const optIdx = Number(answers[n]);
+      const opt = SCORED_QUESTIONS[n].options[optIdx] || SCORED_QUESTIONS[n].options[0];
+      total += opt.score;
+      opt.types.forEach((t) => { match[t] += 1; });
     }
 
-    let html = '';
-    historyStack.forEach((h, i) => {
-      html += `<span class="path-node">${h.breadcrumb}</span>`;
-      html += ' <span class="path-arrow">➔</span> ';
-    });
-    html += '<span class="path-node" style="color: #6366F1;">當前選擇</span>';
-    qBreadcrumbTracker.innerHTML = html;
+    const order = [0, 1, 2, 3, 4].sort((a, b) =>
+      (match[b] - match[a]) ||
+      (Math.abs(total - (10 + 5 * a)) - Math.abs(total - (10 + 5 * b))) ||
+      (a - b)
+    );
+
+    const mainTypeIdx = order[0];
+    const secondTypeIdx = order[1];
+    const mainPersonaId = PERSONA_ORDER[mainTypeIdx];
+    const secondPersonaId = PERSONA_ORDER[secondTypeIdx];
+    const showSecond = match[secondTypeIdx] >= 7;
+
+    const similarities = PERSONA_ORDER.map((pid, idx) => ({
+      id: pid,
+      matchCount: match[idx],
+      pct: Math.round((match[idx] / 10) * 100)
+    }));
+
+    const q11Opt = (q11Idx != null && FINAL_QUESTION.options[q11Idx])
+      ? FINAL_QUESTION.options[q11Idx]
+      : null;
+
+    return {
+      mainPersonaId,
+      secondPersonaId,
+      mainPersona: PERSONAS[mainPersonaId],
+      secondPersona: PERSONAS[secondPersonaId],
+      mainMatchCount: match[mainTypeIdx],
+      mainPct: Math.round((match[mainTypeIdx] / 10) * 100),
+      secondMatchCount: match[secondTypeIdx],
+      secondPct: Math.round((match[secondTypeIdx] / 10) * 100),
+      showSecond,
+      totalScore: total,
+      matchCounts: match,
+      similarities,
+      q11Letter: q11Opt ? q11Opt.letter : '',
+      q11Text: q11Opt ? q11Opt.text : ''
+    };
   }
 
-  // 8. 心理演算過渡
-  function triggerAnalyzing(personaId) {
-    currentResult = PERSONAS[personaId];
-    switchScreen(screenAnalyzing);
+  function triggerAnalyzing() {
+    currentEvaluation = evaluateQuizResult(userAnswers, userAnswers[10]);
+
+    navigateWithTransition(() => {
+      setActiveScreen(screenAnalyzing);
+    }, 'forward');
 
     const subText = document.getElementById('analyzingSubtext');
-    const texts = [
-      '正在比對 5 大社群性格光譜...',
-      '正在計算他人眼光與紀錄特質維度...',
-      '正在為您匹配專屬 MapMo 心靈避風港...'
+    const messages = [
+      '正在核對 Q1–Q10 五大派別吻合題數...',
+      '正在計算光譜相似度分佈與潛在影子...',
+      '正在準備你的《習慣特刊》測驗檔案...'
     ];
 
-    let tIdx = 0;
-    const interval = setInterval(() => {
-      tIdx++;
-      if (tIdx < texts.length && subText) {
-        subText.textContent = texts[tIdx];
+    let step = 0;
+    const timer = setInterval(() => {
+      step += 1;
+      if (step < messages.length && subText) {
+        subText.textContent = messages[step];
       }
-    }, 400);
+    }, 360);
 
     setTimeout(() => {
-      clearInterval(interval);
+      clearInterval(timer);
       playSound('success');
-      renderResult(currentResult);
-      switchScreen(screenResult);
-    }, 1300);
+      if (!currentRunSerial) {
+        const num = Math.floor(1000 + Math.random() * 9000);
+        currentRunSerial = `${currentEvaluation.mainPersonaId.toUpperCase()}-${num}`;
+      }
+      document.title = `我是「${currentEvaluation.mainPersona.name}」 | MapMo 社群心理測驗`;
+      renderResult(currentEvaluation, currentRunSerial);
+      navigateWithTransition(() => {
+        setActiveScreen(screenResult);
+      }, 'forward');
+      recordQuizCompletion(currentEvaluation, currentRunSerial, userAnswers);
+    }, 1150);
   }
 
-  // 9. 渲染結果頁
-  function renderResult(persona) {
-    if (!persona) return;
+  // ─────────────────────────────────────────────────────────
+  // 7. 結果頁渲染（嚴格依 PDF 規格 1~4 順序 + 習慣特刊素材 + MapMo 介紹）
+  // ─────────────────────────────────────────────────────────
+  function renderResult(evalObj, serialCode) {
+    if (!evalObj || !evalObj.mainPersona) return;
+    const persona = evalObj.mainPersona;
 
-    // 頂部流水號
     const serialEl = document.getElementById('polaroidSerial');
-    if (serialEl) {
-      const randNum = Math.floor(1000 + Math.random() * 9000);
-      serialEl.textContent = `NO. ${persona.id.toUpperCase()}-${randNum}`;
-    }
+    if (serialEl) serialEl.textContent = `NO. ${serialCode}`;
 
-    // 徽章與色彩
-    const badgeEl = document.getElementById('personaBadgePill');
-    if (badgeEl) {
-      badgeEl.style.backgroundColor = persona.badgeColor;
-      badgeEl.innerHTML = `<i class="fas fa-sparkles"></i> ${persona.emotionLabel}`;
-    }
+    const pillEl = document.getElementById('personaIssuePill');
+    if (pillEl) pillEl.textContent = `習慣特刊 · ${persona.enTitle}`;
 
-    // 主標題與副標
     const titleEl = document.getElementById('personaMainTitle');
     if (titleEl) {
-      titleEl.textContent = `｜${persona.name}｜`;
-      titleEl.style.color = persona.badgeColor;
+      titleEl.textContent = persona.name;
+      titleEl.style.color = persona.textColor;
     }
 
-    const taglineEl = document.getElementById('personaTagline');
-    if (taglineEl) taglineEl.textContent = persona.tagline;
+    const mottoEl = document.getElementById('personaMotto');
+    if (mottoEl) mottoEl.textContent = persona.motto;
 
-    // 靈魂金句
-    const soulQuoteEl = document.getElementById('personaSoulQuote');
-    if (soulQuoteEl) {
-      soulQuoteEl.textContent = persona.soulQuote;
-      const box = document.getElementById('personaSoulQuoteBox');
-      if (box) box.style.borderLeftColor = persona.badgeColor;
+    const matchEl = document.getElementById('personaMatchHighlight');
+    if (matchEl) {
+      matchEl.innerHTML = `吻合度最高 · <strong>${evalObj.mainPct}%</strong>（吻合 ${evalObj.mainMatchCount} / 10 題）`;
     }
 
-    // 社群現狀
-    const statusEl = document.getElementById('personaStatusText');
-    if (statusEl) statusEl.textContent = persona.status;
+    const charImgEl = document.getElementById('resultCharImg');
+    if (charImgEl) {
+      charImgEl.src = persona.charImg;
+      charImgEl.alt = `${persona.name}代表人物插畫`;
+    }
 
-    // 隱藏性格解析
-    const insightEl = document.getElementById('personaInsightText');
-    if (insightEl) insightEl.textContent = persona.personalityInsight;
+    const descEl = document.getElementById('personaDescriptionText');
+    if (descEl) descEl.textContent = persona.description;
 
-    // 三維特質能量條
-    renderDimensionBar('dimRecord', persona.dimensions.record);
-    renderDimensionBar('dimAwareness', persona.dimensions.awareness);
-    renderDimensionBar('dimShare', persona.dimensions.share);
+    const shadowBox = document.getElementById('secondPersonaShadow');
+    const shadowText = document.getElementById('secondPersonaShadowText');
+    if (shadowBox && shadowText) {
+      if (evalObj.showSecond && evalObj.secondPersona) {
+        shadowBox.hidden = false;
+        shadowText.textContent = `你也有幾分「${evalObj.secondPersona.name}」的影子（相似度 ${evalObj.secondPct}%）。`;
+      } else {
+        shadowBox.hidden = true;
+      }
+    }
 
-    // 適合功能列表
+    // 五大派別相似度長條圖（嚴格依光譜順序：潛水 -> 備忘錄 -> 悄悄 -> 精修 -> 隨心，僅主派別上色）
+    const barsHost = document.getElementById('spectrumBarsList');
+    if (barsHost) {
+      barsHost.innerHTML = evalObj.similarities.map((item) => {
+        const p = PERSONAS[item.id];
+        const isWinner = item.id === persona.id;
+        return `
+          <div class="spectrum-col${isWinner ? ' is-winner' : ''}" style="--winner-color:${p.barColor};">
+            <span class="spectrum-col-pct">${item.pct}%</span>
+            <div class="spectrum-col-track" aria-hidden="true">
+              <div class="spectrum-col-fill" data-target-height="${item.pct}" style="height:0%;"></div>
+            </div>
+            <span class="spectrum-col-label">${escapeHtml(p.shortName)}</span>
+          </div>
+        `;
+      }).join('');
+
+      requestAnimationFrame(() => {
+        barsHost.querySelectorAll('.spectrum-col-fill').forEach((bar) => {
+          const h = bar.getAttribute('data-target-height') || '0';
+          bar.style.height = `${h}%`;
+        });
+      });
+    }
+
+    // 專屬特刊答案海報區
+    const posterImg = document.getElementById('resultPosterImg');
+    if (posterImg) {
+      posterImg.src = persona.posterImg;
+      posterImg.alt = `${persona.name}《習慣特刊》答案海報`;
+    }
+    const posterHeading = document.getElementById('posterCardHeading');
+    if (posterHeading) posterHeading.textContent = `《習慣特刊》${persona.name}專刊`;
+    const posterDesc = document.getElementById('posterObserveDesc');
+    if (posterDesc) posterDesc.textContent = persona.posterObserve;
+
+    // Q11 結尾真心話呼應 MapMo
+    const q11Pill = document.getElementById('q11ReflectionPill');
+    const q11TextEl = document.getElementById('q11ReflectionText');
+    if (q11Pill && q11TextEl) {
+      if (evalObj.q11Text) {
+        q11Pill.hidden = false;
+        q11TextEl.textContent = `不用擔心誰看到時，你最想分享：「${evalObj.q11Text}」`;
+      } else {
+        q11Pill.hidden = true;
+      }
+    }
+
     renderFeaturesList(persona.features);
-
-    // 重新渲染底部的卡片 QR Code
     renderCardFooterQR();
-  }
-
-  function renderDimensionBar(prefix, dimData) {
-    const labelEl = document.getElementById(`${prefix}Label`);
-    const valEl = document.getElementById(`${prefix}Val`);
-    const fillEl = document.getElementById(`${prefix}Fill`);
-    if (labelEl) labelEl.textContent = dimData.label;
-    if (valEl) valEl.textContent = `${dimData.value}%`;
-    if (fillEl) {
-      fillEl.style.backgroundColor = dimData.color;
-      fillEl.style.width = '0%';
-      setTimeout(() => {
-        fillEl.style.width = `${dimData.value}%`;
-      }, 100);
-    }
+    renderCrowdStatsUI(persona.id);
   }
 
   function renderFeaturesList(features) {
@@ -861,18 +1117,9 @@
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    // 主要推薦
-    features.primary.forEach(f => {
-      const card = createFeatureCard(f, '主要適合', 'primary');
-      listEl.appendChild(card);
-    });
-
-    // 次要推薦
-    if (features.secondary && features.secondary.length > 0) {
-      features.secondary.forEach(f => {
-        const card = createFeatureCard(f, '次要推薦', 'secondary');
-        listEl.appendChild(card);
-      });
+    features.primary.forEach((f) => listEl.appendChild(createFeatureCard(f, '主要適合', 'primary')));
+    if (features.secondary) {
+      features.secondary.forEach((f) => listEl.appendChild(createFeatureCard(f, '進階推薦', 'secondary')));
     }
   }
 
@@ -882,102 +1129,283 @@
     div.innerHTML = `
       <div class="feature-badge-row">
         <div class="feature-name">
-          <i class="fas fa-${feature.icon}" style="color: #6366F1; margin-right: 4px;"></i>
-          ${feature.name}
+          <i class="fas fa-${escapeHtml(feature.icon)}" style="color: #D96846; margin-right: 5px;" aria-hidden="true"></i>${escapeHtml(feature.name)}
         </div>
-        <span class="feature-type-chip ${badgeClass}">${badgeText}</span>
+        <span class="feature-fit-pill ${badgeClass}">${escapeHtml(badgeText)}</span>
       </div>
-      <div class="feature-desc">${feature.desc}</div>
+      <p class="feature-desc">${escapeHtml(feature.desc)}</p>
     `;
     return div;
   }
 
-  // 10. 3D 情緒樹 ⇄ 像素花園 QR Code 互動生成引擎 (V6: 透氣櫻木樹冠 · 精雕Y字分枝樹幹 · 因果落葉成 QR Code)
-  const FIXED_QUIZ_GITHUB_URL = 'https://chen1an.github.io/mapmo-quiz/';
+  function downloadZinePosterFile() {
+    playSound('tap');
+    if (!currentEvaluation || !currentEvaluation.mainPersona) return;
+    const p = currentEvaluation.mainPersona;
+    const a = document.createElement('a');
+    a.href = p.posterImg;
+    a.download = `MapMo-習慣特刊-${p.name}.jpg`;
+    a.click();
+    showToast(`📰 已下載《習慣特刊》${p.name}原圖海報！`);
+  }
 
-  // 6 種調色盤定義：通透粉彩樹冠 5 階 (亮葉維持足夠彩度防撞底) + 高對比掃碼 QR 磚階
+  // ─────────────────────────────────────────────────────────
+  // 8. 結果頁 2X Canvas 分享圖匯出（含手札底紋 + 人物插畫 + 光譜相似度長條 + QR Code）
+  // ─────────────────────────────────────────────────────────
+  function exportResultCardImage() {
+    playSound('tap');
+    if (!currentEvaluation || !currentEvaluation.mainPersona) return;
+    showToast('🎨 正在合成高清結果檔案圖...');
+
+    const ev = currentEvaluation;
+    const p = ev.mainPersona;
+
+    const canvas = document.createElement('canvas');
+    const W = 1080;
+    const H = 1440;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // 牛皮手札外框背景
+    ctx.fillStyle = '#D9C9A8';
+    ctx.fillRect(0, 0, W, H);
+
+    // 內頁卡片
+    const cardX = 56;
+    const cardY = 56;
+    const cardW = W - 112;
+    const cardH = H - 112;
+    drawRoundRect(ctx, cardX + 10, cardY + 12, cardW, cardH, 32, '#1E1B16');
+    drawRoundRect(ctx, cardX, cardY, cardW, cardH, 32, '#FFFDF8', '#1E1B16', 4);
+
+    // 頂部特刊 Header
+    ctx.fillStyle = '#4A4035';
+    ctx.font = '900 22px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('MAPMO 習慣特刊 · 測驗檔案', cardX + 44, cardY + 60);
+
+    ctx.textAlign = 'right';
+    ctx.font = '800 20px "Outfit", sans-serif';
+    ctx.fillStyle = '#786E60';
+    ctx.fillText(`NO. ${currentRunSerial || p.id.toUpperCase()}`, cardX + cardW - 44, cardY + 60);
+
+    ctx.strokeStyle = 'rgba(30, 27, 22, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(cardX + 44, cardY + 86);
+    ctx.lineTo(cardX + cardW - 44, cardY + 86);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 派別稱號 + 徽章
+    drawRoundRect(ctx, cardX + 44, cardY + 112, 340, 42, 21, '#FFE45E', '#1E1B16', 2.5);
+    ctx.fillStyle = '#1E1B16';
+    ctx.textAlign = 'center';
+    ctx.font = '900 18px "Outfit", sans-serif';
+    ctx.fillText(p.enTitle, cardX + 44 + 170, cardY + 140);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = p.textColor;
+    ctx.font = '900 58px "Noto Sans TC", sans-serif';
+    ctx.fillText(p.name, cardX + 44, cardY + 225);
+
+    ctx.fillStyle = '#4A4035';
+    ctx.font = '800 24px "Noto Sans TC", sans-serif';
+    ctx.fillText(p.motto, cardX + 44, cardY + 272);
+
+    // 相似度徽章
+    drawRoundRect(ctx, cardX + 44, cardY + 296, 360, 44, 12, '#EFE6D4', '#1E1B16', 2);
+    ctx.fillStyle = '#1E1B16';
+    ctx.font = '800 20px "Noto Sans TC", sans-serif';
+    ctx.fillText(`吻合度最高 ${ev.mainPct}%（${ev.mainMatchCount}/10 題）`, cardX + 64, cardY + 325);
+
+    // 派別描述區塊
+    const descY = cardY + 382;
+    drawRoundRect(ctx, cardX + 44, descY, cardW - 88, ev.showSecond ? 178 : 120, 20, '#FAF5EB', '#E3D9C6', 2);
+    ctx.fillStyle = '#1E1B16';
+    ctx.font = '600 22px "Noto Sans TC", sans-serif';
+    wrapText(ctx, p.description, cardX + 70, descY + 46, cardW - 140, 34);
+
+    if (ev.showSecond && ev.secondPersona) {
+      drawRoundRect(ctx, cardX + 70, descY + 114, cardW - 140, 46, 12, '#FCEEE7', '#F2C9B6', 2);
+      ctx.fillStyle = '#B94F30';
+      ctx.font = '800 19px "Noto Sans TC", sans-serif';
+      ctx.fillText(`✨ 你也有幾分「${ev.secondPersona.name}」的影子（相似度 ${ev.secondPct}%）`, cardX + 90, descY + 144);
+    }
+
+    // 五大派別直立長條圖（光譜順序）
+    const chartY = descY + (ev.showSecond ? 210 : 154);
+    ctx.fillStyle = '#1E1B16';
+    ctx.font = '900 24px "Noto Sans TC", sans-serif';
+    ctx.fillText('五大派別相似度光譜', cardX + 44, chartY);
+
+    const chartInnerW = cardW - 88;
+    const colGap = 18;
+    const colW = (chartInnerW - colGap * 4) / 5;
+    const barMaxH = 210;
+    const barBaseY = chartY + 266;
+
+    ev.similarities.forEach((item, idx) => {
+      const sp = PERSONAS[item.id];
+      const isWinner = item.id === p.id;
+      const cx = cardX + 44 + idx * (colW + colGap);
+
+      ctx.textAlign = 'center';
+      ctx.font = isWinner ? '900 22px "Outfit", sans-serif' : '700 20px "Outfit", sans-serif';
+      ctx.fillStyle = isWinner ? p.barColor : '#786E60';
+      ctx.fillText(`${item.pct}%`, cx + colW / 2, chartY + 42);
+
+      drawRoundRect(ctx, cx, chartY + 54, colW, barMaxH, 14, '#F2EDE3');
+      const fillH = Math.max(8, Math.round((item.pct / 100) * barMaxH));
+      if (item.pct > 0) {
+        drawRoundRect(ctx, cx, barBaseY - fillH, colW, fillH, 14, isWinner ? p.barColor : '#CFC6B6');
+      }
+
+      ctx.font = isWinner ? '900 19px "Noto Sans TC", sans-serif' : '700 18px "Noto Sans TC", sans-serif';
+      ctx.fillStyle = isWinner ? p.textColor : '#786E60';
+      ctx.fillText(sp.shortName, cx + colW / 2, barBaseY + 32);
+    });
+
+    // Q11 真心話貼紙
+    const q11Y = barBaseY + 70;
+    if (ev.q11Text) {
+      drawRoundRect(ctx, cardX + 44, q11Y, cardW - 88, 60, 14, '#FFE45E', '#1E1B16', 2);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#1E1B16';
+      ctx.font = '800 19px "Noto Sans TC", sans-serif';
+      ctx.fillText(`不用擔心誰看到時，我最想分享：「${ev.q11Text}」`, cardX + 66, q11Y + 37);
+    }
+
+    // 底部掃碼區
+    const footY = cardY + cardH - 134;
+    ctx.strokeStyle = 'rgba(30, 27, 22, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(cardX + 44, footY);
+    ctx.lineTo(cardX + cardW - 44, footY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1E1B16';
+    ctx.font = '900 22px "Noto Sans TC", sans-serif';
+    ctx.fillText('在 MapMo，不用在乎誰先看見', cardX + 44, footY + 46);
+    ctx.font = '700 16px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#786E60';
+    ctx.fillText(`掃描右方 QR Code 測測你的社群派別 · ${getQuizURL()}`, cardX + 44, footY + 80);
+
+    const qrCanvas = createBwQrCanvas(110, getQuizURL());
+    ctx.drawImage(qrCanvas, cardX + cardW - 148, footY + 12, 104, 104);
+
+    // 嘗試疊入透明人物插畫於右上角（若因跨域限制載入失敗則優雅略過）
+    const finalizeBlob = () => {
+      try {
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.download = `MapMo社群派別-${p.name}.png`;
+          a.href = url;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast('🎉 測驗結果檔案圖已匯出！');
+        }, 'image/png');
+      } catch (_) {
+        showToast('⚠️ 請透過本地伺服器或線上網址匯出圖片');
+      }
+    };
+
+    const charImg = document.getElementById('resultCharImg');
+    if (charImg && charImg.complete && charImg.naturalWidth > 0) {
+      try {
+        const cw = 330;
+        const ch = Math.round((charImg.naturalHeight / charImg.naturalWidth) * cw);
+        ctx.drawImage(charImg, cardX + cardW - cw - 36, cardY + 115, cw, ch);
+      } catch (_) {}
+    }
+    finalizeBlob();
+  }
+
+  function drawRoundRect(ctx, x, y, width, height, radius, fillColor, strokeColor, lineWidth) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    if (fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+    if (strokeColor && lineWidth) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const chars = String(text || '').split('');
+    let line = '';
+    let currentY = y;
+    for (let n = 0; n < chars.length; n++) {
+      const testLine = line + chars[n];
+      if (ctx.measureText(testLine).width > maxWidth && n > 0) {
+        ctx.fillText(line, x, currentY);
+        line = chars[n];
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, currentY);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // 9. 3D 情緒樹 ⇄ 像素花園 QR Code 生成引擎
+  // ─────────────────────────────────────────────────────────
   const TREE_QR_PALETTES = {
-    pink: {
-      label: '櫻花粉 (樂)',
-      foliage: ['#CE5B7A', '#DE7290', '#EC88A4', '#F69EB7', '#FFB6CA'],
-      qrTiles: ['#C45271', '#D66584', '#E57997', '#B24361']
-    },
-    purple: {
-      label: '薰衣草紫',
-      foliage: ['#7653DB', '#8A69EB', '#9E80F5', '#B297FC', '#C7B0FF'],
-      qrTiles: ['#6D49D4', '#8160E6', '#9577F2', '#5A38BD']
-    },
-    red: {
-      label: '楓葉紅 (怒)',
-      foliage: ['#C4352C', '#D94940', '#EC6158', '#FA786F', '#FF938A'],
-      qrTiles: ['#B5281F', '#CD3A31', '#E04D44', '#9C1E16']
-    },
-    yellow: {
-      label: '暖陽金 (喜)',
-      foliage: ['#C9810E', '#DC961D', '#EEAA2F', '#FABF46', '#FFD362'],
-      qrTiles: ['#BD7708', '#D18912', '#E39B20', '#A66504']
-    },
-    blue: {
-      label: '晴空藍 (哀)',
-      foliage: ['#2C74C9', '#428BDE', '#5CA2F0', '#77B7FA', '#94CCFF'],
-      qrTiles: ['#2669BA', '#397FD1', '#4E94E3', '#1E579E']
-    },
-    grey: {
-      label: '銀霧白 / 暮灰 (無)',
-      foliage: ['#5C6E80', '#708394', '#8698A8', '#9CAEC0', '#B3C4D4'],
-      qrTiles: ['#526373', '#66788A', '#7A8C9E', '#42515E']
-    }
+    pink: { foliage: ['#CE5B7A', '#DE7290', '#EC88A4', '#F69EB7', '#FFB6CA'], qrTiles: ['#C45271', '#D66584', '#E57997', '#B24361'] },
+    purple: { foliage: ['#7653DB', '#8A69EB', '#9E80F5', '#B297FC', '#C7B0FF'], qrTiles: ['#6D49D4', '#8160E6', '#9577F2', '#5A38BD'] },
+    red: { foliage: ['#C4352C', '#D94940', '#EC6158', '#FA786F', '#FF938A'], qrTiles: ['#B5281F', '#CD3A31', '#E04D44', '#9C1E16'] },
+    yellow: { foliage: ['#C9810E', '#DC961D', '#EEAA2F', '#FABF46', '#FFD362'], qrTiles: ['#BD7708', '#D18912', '#E39B20', '#A66504'] },
+    blue: { foliage: ['#2C74C9', '#428BDE', '#5CA2F0', '#77B7FA', '#94CCFF'], qrTiles: ['#2669BA', '#397FD1', '#4E94E3', '#1E579E'] },
+    grey: { foliage: ['#5C6E80', '#708394', '#8698A8', '#9CAEC0', '#B3C4D4'], qrTiles: ['#526373', '#66788A', '#7A8C9E', '#42515E'] }
   };
 
-  // 季節草地與定位框配色：春（嫩綠+繁花）、夏（深翠綠+高茂密草叢+流螢）、秋（金橘紅+落楓地毯）
   const SEASON_THEMES = {
-    spring: {
-      grass: ['#669E34', '#7AB542', '#8EC754', '#A2D468'],
-      earth: ['#85684A', '#6E5338'],
-      slabGrassLeft: '#8EC754',
-      slabGrassRight: '#72A83C',
-      grassScale: 0.92,
-      accentType: 'flowers',
-      accentColors: ['#FF6B8B', '#FFD166', '#FFFFFF', '#C98BFF']
-    },
-    summer: {
-      grass: ['#1E5918', '#2A6E22', '#38872E', '#4DA13B'],
-      earth: ['#634B32', '#4F3A25'],
-      slabGrassLeft: '#38872E',
-      slabGrassRight: '#24631C',
-      grassScale: 1.75,
-      accentType: 'fireflies',
-      accentColors: ['#E6FF66', '#B8F553', '#FFF599', '#8AE65C']
-    },
-    autumn: {
-      grass: ['#9E5B1B', '#BA7322', '#D48E2B', '#E6A938'],
-      earth: ['#754B29', '#5C381C'],
-      slabGrassLeft: '#D48E2B',
-      slabGrassRight: '#AD681E',
-      grassScale: 1.05,
-      accentType: 'maple',
-      accentColors: ['#C93B2B', '#E05A2B', '#EB8A28', '#F2B438']
-    }
+    spring: { grass: ['#669E34', '#7AB542', '#8EC754', '#A2D468'], earth: ['#85684A', '#6E5338'], slabGrassLeft: '#8EC754', slabGrassRight: '#72A83C', grassScale: 0.92, accentType: 'flowers', accentColors: ['#FF6B8B', '#FFD166', '#FFFFFF', '#C98BFF'] },
+    summer: { grass: ['#1E5918', '#2A6E22', '#38872E', '#4DA13B'], earth: ['#634B32', '#4F3A25'], slabGrassLeft: '#38872E', slabGrassRight: '#24631C', grassScale: 1.75, accentType: 'fireflies', accentColors: ['#E6FF66', '#B8F553', '#FFF599', '#8AE65C'] },
+    autumn: { grass: ['#9E5B1B', '#BA7322', '#D48E2B', '#E6A938'], earth: ['#754B29', '#5C381C'], slabGrassLeft: '#D48E2B', slabGrassRight: '#AD681E', grassScale: 1.05, accentType: 'maple', accentColors: ['#C93B2B', '#E05A2B', '#EB8A28', '#F2B438'] }
   };
 
-  // 13 個柔順連貫的穹頂櫻花樹冠葉群 (重疊柔和圓頂 + 向上延伸 Y 型主側枝，避免突兀球塊感)
   const TREE_BOUGHS = [
-    { u: -0.04, v: -0.04, h: 266, rx: 0.30, ry: 0.30, rh: 28, drawBranch: true,  branchStartH: 112, branchW: 4.8, branchEndFrac: 0.50 }, // 0: 頂峰樹冠尖頂
-    { u: -0.24, v: 0.02,  h: 234, rx: 0.34, ry: 0.32, rh: 28, drawBranch: true,  branchStartH: 104, branchW: 6.4, branchEndFrac: 0.72 }, // 1: 上左主冠
-    { u: 0.04,  v: -0.26, h: 238, rx: 0.34, ry: 0.32, rh: 28, drawBranch: true,  branchStartH: 106, branchW: 6.4, branchEndFrac: 0.72 }, // 2: 上右主冠
-    { u: -0.36, v: -0.34, h: 204, rx: 0.42, ry: 0.40, rh: 32, drawBranch: false },                                                        // 3: 後上方襯底雲朵
-    { u: -0.06, v: -0.06, h: 206, rx: 0.38, ry: 0.38, rh: 30, drawBranch: false },                                                        // 4: 中軸柔光冠
-    { u: -0.50, v: 0.14,  h: 186, rx: 0.38, ry: 0.35, rh: 30, drawBranch: true,  branchStartH: 88,  branchW: 7.4, branchEndFrac: 0.78 }, // 5: 中左伸展枝冠
-    { u: 0.16,  v: -0.50, h: 192, rx: 0.38, ry: 0.35, rh: 30, drawBranch: true,  branchStartH: 92,  branchW: 7.4, branchEndFrac: 0.78 }, // 6: 中右伸展枝冠
-    { u: -0.60, v: 0.36,  h: 154, rx: 0.34, ry: 0.32, rh: 26, drawBranch: true,  branchStartH: 84,  branchW: 6.2, branchEndFrac: 0.76 }, // 7: 左側飄逸垂枝
-    { u: 0.36,  v: -0.60, h: 158, rx: 0.34, ry: 0.32, rh: 26, drawBranch: true,  branchStartH: 86,  branchW: 6.2, branchEndFrac: 0.76 }, // 8: 右側飄逸垂枝
-    { u: -0.24, v: 0.26,  h: 176, rx: 0.32, ry: 0.30, rh: 26, drawBranch: true,  branchStartH: 96,  branchW: 5.8, branchEndFrac: 0.66 }, // 9: 左前透枝層
-    { u: 0.28,  v: -0.22, h: 182, rx: 0.32, ry: 0.30, rh: 26, drawBranch: true,  branchStartH: 98,  branchW: 5.8, branchEndFrac: 0.66 }, // 10: 右前透枝層
-    { u: -0.14, v: 0.40,  h: 150, rx: 0.28, ry: 0.26, rh: 22, drawBranch: false },                                                        // 11: 前低輕拂瓣群
-    { u: 0.38,  v: -0.02, h: 158, rx: 0.28, ry: 0.26, rh: 22, drawBranch: false }                                                         // 12: 右前輕拂瓣群
+    { u: -0.04, v: -0.04, h: 266, rx: 0.30, ry: 0.30, rh: 28, drawBranch: true, branchStartH: 112, branchW: 4.8, branchEndFrac: 0.50 },
+    { u: -0.24, v: 0.02, h: 234, rx: 0.34, ry: 0.32, rh: 28, drawBranch: true, branchStartH: 104, branchW: 6.4, branchEndFrac: 0.72 },
+    { u: 0.04, v: -0.26, h: 238, rx: 0.34, ry: 0.32, rh: 28, drawBranch: true, branchStartH: 106, branchW: 6.4, branchEndFrac: 0.72 },
+    { u: -0.36, v: -0.34, h: 204, rx: 0.42, ry: 0.40, rh: 32, drawBranch: false },
+    { u: -0.06, v: -0.06, h: 206, rx: 0.38, ry: 0.38, rh: 30, drawBranch: false },
+    { u: -0.50, v: 0.14, h: 186, rx: 0.38, ry: 0.35, rh: 30, drawBranch: true, branchStartH: 88, branchW: 7.4, branchEndFrac: 0.78 },
+    { u: 0.16, v: -0.50, h: 192, rx: 0.38, ry: 0.35, rh: 30, drawBranch: true, branchStartH: 92, branchW: 7.4, branchEndFrac: 0.78 },
+    { u: -0.60, v: 0.36, h: 154, rx: 0.34, ry: 0.32, rh: 26, drawBranch: true, branchStartH: 84, branchW: 6.2, branchEndFrac: 0.76 },
+    { u: 0.36, v: -0.60, h: 158, rx: 0.34, ry: 0.32, rh: 26, drawBranch: true, branchStartH: 86, branchW: 6.2, branchEndFrac: 0.76 },
+    { u: -0.24, v: 0.26, h: 176, rx: 0.32, ry: 0.30, rh: 26, drawBranch: true, branchStartH: 96, branchW: 5.8, branchEndFrac: 0.66 },
+    { u: 0.28, v: -0.22, h: 182, rx: 0.32, ry: 0.30, rh: 26, drawBranch: true, branchStartH: 98, branchW: 5.8, branchEndFrac: 0.66 },
+    { u: -0.14, v: 0.40, h: 150, rx: 0.28, ry: 0.26, rh: 22, drawBranch: false },
+    { u: 0.38, v: -0.02, h: 158, rx: 0.28, ry: 0.26, rh: 22, drawBranch: false }
   ];
 
-  // 5 條收斂雅緻的抓地樹根 (自然伏地不過度張牙)
   const TREE_ROOTS = [
     { angle: 0.38, len: 0.17, startH: 20, width: 9.8 },
     { angle: 1.55, len: 0.16, startH: 19, width: 9.2 },
@@ -986,10 +1414,10 @@
     { angle: 5.25, len: 0.16, startH: 20, width: 9.2 }
   ];
 
-  let treeQrState = {
+  const treeQrState = {
     url: FIXED_QUIZ_GITHUB_URL,
-    mode: 'tree',         // 'tree' (morphTime -> 0) | 'qr' (morphTime -> 1)
-    morphTime: 0,         // 二幕式落葉入格線性時間軸 (0 -> 1, ~1.30 秒)
+    mode: 'tree',
+    morphTime: 0,
     morphP: 0,
     targetP: 0,
     season: 'spring',
@@ -1028,7 +1456,6 @@
     return false;
   }
 
-  // 建立 QR 矩陣與 3D 粒子/雨水系統
   function rebuildQrAndTreeGeometry(urlText) {
     if (typeof QRCode === 'undefined' || !QRCode.QRCodeModel) return;
     const text = (urlText || FIXED_QUIZ_GITHUB_URL).trim();
@@ -1036,14 +1463,10 @@
     model.addData(text);
     model.make();
     treeQrState.qrModel = model;
-
-    if (treeQrState.grassBlades.length === 0) {
-      generateProceduralTreeGeometry();
-    }
+    if (treeQrState.grassBlades.length === 0) generateProceduralTreeGeometry();
     rebuildLeafParticlesFromQrModel(model);
   }
 
-  // 建立 1:1 QR 磚塊對應葉片粒子，並依波浪次序與團塊分佈編排落葉序列
   function rebuildLeafParticlesFromQrModel(model) {
     const count = model.getModuleCount();
     const subCount = count * 2;
@@ -1052,9 +1475,7 @@
 
     for (let r = 0; r < count; r++) {
       for (let c = 0; c < count; c++) {
-        if (isFinderModule(r, c, count)) continue;
-        if (!model.isDark(r, c)) continue;
-
+        if (isFinderModule(r, c, count) || !model.isDark(r, c)) continue;
         for (let sr = 0; sr < 2; sr++) {
           for (let sc = 0; sc < 2; sc++) {
             idx++;
@@ -1076,104 +1497,68 @@
               for (let bi = 0; bi < TREE_BOUGHS.length; bi++) {
                 const b = TREE_BOUGHS[bi];
                 const d = Math.hypot(qrU - b.u, qrV - b.v) + hash2D(gr, gc, 11 + bi) * 0.25;
-                if (d < bestScore) {
-                  bestScore = d;
-                  boughIdx = bi;
-                }
+                if (d < bestScore) { bestScore = d; boughIdx = bi; }
               }
             }
             const bough = TREE_BOUGHS[boughIdx];
-
             const theta = hash2D(gr, gc, 17) * Math.PI * 2;
             const phi = Math.acos(2 * hash2D(gr, gc, 23) - 1);
             const shellR = 0.35 + Math.pow(hash2D(gr, gc, 29), 0.45) * 0.65;
-
             const dx = Math.sin(phi) * Math.cos(theta) * shellR;
             const dy = Math.sin(phi) * Math.sin(theta) * shellR;
             const dz = Math.cos(phi) * shellR;
 
-            let treeU = bough.u + dx * bough.rx;
-            let treeV = bough.v + dy * bough.ry;
+            const treeU = bough.u + dx * bough.rx;
+            const treeV = bough.v + dy * bough.ry;
             let treeH = bough.h + dz * bough.rh;
-
-            // 中央枝幹透視留白 (讓內部 Y 型褐枝隱約從櫻花群中穿出，還原影片清透空氣感)
-            const distFromAxis = Math.hypot(treeU, treeV);
-            if (distFromAxis < 0.20 && treeH < 152) {
-              treeH = 156 + hash2D(gr, gc, 37) * 32;
-            }
+            if (Math.hypot(treeU, treeV) < 0.20 && treeH < 152) treeH = 156 + hash2D(gr, gc, 37) * 32;
 
             const localLight = dz * 0.56 - (dx + dy) * 0.28 + (treeH - 135) / 145 * 0.40 + (hash2D(gr, gc, 41) - 0.5) * 0.24;
             const shadeIdx = Math.max(0, Math.min(4, Math.floor((localLight + 0.52) * 3.9)));
-
-            // 纖細靈巧的像素花瓣尺寸，呈現輕盈柔和雲朵感
             const leafW = 5.4 + hash2D(gr, gc, 53) * 3.1;
             const leafH = 4.0 + hash2D(gr, gc, 61) * 2.2;
-
-            // 依「外圍垂枝 → 中心頂梢」有序飄落時間，強烈連結落葉與地面格子的歸屬感
             const outerFirst = Math.max(0, 1 - Math.min(1, radial / 1.05));
             const lowFirst = Math.max(0, Math.min(1, (treeH - 115) / 155));
             const waveDelay = outerFirst * 0.45 + lowFirst * 0.35 + hash2D(gr, gc, 71) * 0.20;
             const swirlSign = hash2D(gr, gc, 83) > 0.5 ? 1 : -1;
-
             const viewDepth = treeU + treeV;
             const isBehindTrunk = (viewDepth < -0.04 && treeH < 212);
 
             particles.push({
-              r, c, sr, sc, gr, gc,
-              u0, v0, u1, v1, qrU, qrV,
-              treeU, treeV, treeH,
-              viewDepth,
-              isBehindTrunk,
-              shadeIdx, leafW, leafH,
-              waveDelay, swirlSign,
-              seed: idx
+              r, c, sr, sc, gr, gc, u0, v0, u1, v1, qrU, qrV,
+              treeU, treeV, treeH, viewDepth, isBehindTrunk,
+              shadeIdx, leafW, leafH, waveDelay, swirlSign, seed: idx
             });
           }
         }
       }
     }
-
-    // 靜態等距角度下一次排序完成即可，零運行時排序負擔
     particles.sort((a, b) => (a.viewDepth * 140 + a.treeH * 0.22) - (b.viewDepth * 140 + b.treeH * 0.22));
     treeQrState.leafParticles = particles;
   }
 
   function generateProceduralTreeGeometry() {
-    // 1. 生成 3 個定位角與四周邊框的 3D 搖曳草叢 (280 株)
     const blades = [];
     for (let i = 0; i < 280; i++) {
       let u = 0, v = 0;
       const mode = i % 7;
-      if (mode === 0) {
-        u = -0.96 + hash2D(i, 11, 77) * 0.46;
-        v = -0.96 + hash2D(i, 22, 88) * 0.46;
-      } else if (mode === 1) {
-        u = 0.50 + hash2D(i, 11, 77) * 0.46;
-        v = -0.96 + hash2D(i, 22, 88) * 0.46;
-      } else if (mode === 2) {
-        u = -0.96 + hash2D(i, 11, 77) * 0.46;
-        v = 0.50 + hash2D(i, 22, 88) * 0.46;
-      } else if (mode === 3) {
-        u = -0.94 + hash2D(i, 11, 77) * 1.88;
-        v = -0.96 + hash2D(i, 22, 88) * 0.18;
-      } else if (mode === 4) {
-        u = -0.94 + hash2D(i, 11, 77) * 1.88;
-        v = 0.78 + hash2D(i, 22, 88) * 0.18;
-      } else if (mode === 5) {
-        u = -0.96 + hash2D(i, 11, 77) * 0.18;
-        v = -0.94 + hash2D(i, 22, 88) * 1.88;
-      } else {
-        u = 0.78 + hash2D(i, 11, 77) * 0.18;
-        v = -0.94 + hash2D(i, 22, 88) * 1.88;
-      }
-      const height = 11 + hash2D(i, 33, 99) * 16;
-      const lean = (hash2D(i, 44, 11) - 0.5) * 11;
-      const shade = Math.floor(hash2D(i, 55, 22) * 4);
-      blades.push({ u, v, height, lean, shade, phase: hash2D(i, 66, 33) * Math.PI * 2 });
+      if (mode === 0) { u = -0.96 + hash2D(i, 11, 77) * 0.46; v = -0.96 + hash2D(i, 22, 88) * 0.46; }
+      else if (mode === 1) { u = 0.50 + hash2D(i, 11, 77) * 0.46; v = -0.96 + hash2D(i, 22, 88) * 0.46; }
+      else if (mode === 2) { u = -0.96 + hash2D(i, 11, 77) * 0.46; v = 0.50 + hash2D(i, 22, 88) * 0.46; }
+      else if (mode === 3) { u = -0.94 + hash2D(i, 11, 77) * 1.88; v = -0.96 + hash2D(i, 22, 88) * 0.18; }
+      else if (mode === 4) { u = -0.94 + hash2D(i, 11, 77) * 1.88; v = 0.78 + hash2D(i, 22, 88) * 0.18; }
+      else if (mode === 5) { u = -0.96 + hash2D(i, 11, 77) * 0.18; v = -0.94 + hash2D(i, 22, 88) * 1.88; }
+      else { u = 0.78 + hash2D(i, 11, 77) * 0.18; v = -0.94 + hash2D(i, 22, 88) * 1.88; }
+      blades.push({
+        u, v,
+        height: 11 + hash2D(i, 33, 99) * 16,
+        lean: (hash2D(i, 44, 11) - 0.5) * 11,
+        shade: Math.floor(hash2D(i, 55, 22) * 4),
+        phase: hash2D(i, 66, 33) * Math.PI * 2
+      });
     }
     treeQrState.grassBlades = blades;
 
-    // 2. 季節專屬地面與草叢點綴 (春花 / 夏螢 / 秋楓)
     const accents = [];
     for (let i = 0; i < 48; i++) {
       const targetBlade = blades[i * 5 % blades.length];
@@ -1188,7 +1573,6 @@
     }
     treeQrState.seasonAccents = accents;
 
-    // 3. 空中飄落花瓣動態
     const floating = [];
     for (let i = 0; i < 24; i++) {
       floating.push({
@@ -1216,36 +1600,25 @@
     };
     const [r1, g1, b1] = toRgb(hexA);
     const [r2, g2, b2] = toRgb(hexB);
-    const r = Math.round(r1 + (r2 - r1) * t);
-    const g = Math.round(g1 + (g2 - g1) * t);
-    const bl = Math.round(b1 + (b2 - b1) * t);
-    return `rgb(${r},${g},${bl})`;
+    return `rgb(${Math.round(r1 + (r2 - r1) * t)},${Math.round(g1 + (g2 - g1) * t)},${Math.round(b1 + (b2 - b1) * t)})`;
   }
 
   function getModuleSubPixelColor(r, c, sr, sc, count, isDark, palette, seasonTheme) {
     const h = hash2D(r * 2 + sr, c * 2 + sc, 101);
-    if (!isDark) {
-      return h > 0.55 ? '#EFECE4' : '#E7E3D9';
-    }
+    if (!isDark) return h > 0.55 ? '#EFECE4' : '#E7E3D9';
     if (isFinderModule(r, c, count)) {
       const isEdge = (r === 0 || r === 6 || c === 0 || c === 6 || r === count - 7 || r === count - 1 || c === count - 7 || c === count - 1);
-      if (isEdge && h < 0.28) {
-        return seasonTheme.earth[h < 0.14 ? 0 : 1];
-      }
-      const gIdx = Math.min(3, Math.floor(h * 4));
-      return seasonTheme.grass[gIdx];
+      if (isEdge && h < 0.28) return seasonTheme.earth[h < 0.14 ? 0 : 1];
+      return seasonTheme.grass[Math.min(3, Math.floor(h * 4))];
     }
-    const cIdx = Math.min(3, Math.floor(h * 4));
-    return palette.qrTiles[cIdx];
+    return palette.qrTiles[Math.min(3, Math.floor(h * 4))];
   }
 
-  // 繪製實心漸細貝茲樹枝（基底粗、末梢細，帶暗部樹皮與上方迎光木紋邊緣）
   function drawTaperedLimb3D(ctx, p0, p1, p2, wStart, wEnd, fillColor, highlightColor) {
     const steps = 6;
     const leftPts = [];
     const rightPts = [];
     const hiPts = [];
-
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
       const it = 1 - t;
@@ -1257,14 +1630,10 @@
       const nx = -ty / len;
       const ny = tx / len;
       const halfW = (wStart * (1 - t) + wEnd * t) * 0.5;
-
       leftPts.push([x + nx * halfW, y + ny * halfW]);
       rightPts.push([x - nx * halfW, y - ny * halfW]);
-      if (highlightColor) {
-        hiPts.push([x + nx * halfW * 0.35 - 0.8, y + ny * halfW * 0.35 - 1.0]);
-      }
+      if (highlightColor) hiPts.push([x + nx * halfW * 0.35 - 0.8, y + ny * halfW * 0.35 - 1.0]);
     }
-
     ctx.fillStyle = fillColor;
     ctx.beginPath();
     ctx.moveTo(leftPts[0][0], leftPts[0][1]);
@@ -1272,7 +1641,6 @@
     for (let i = rightPts.length - 1; i >= 0; i--) ctx.lineTo(rightPts[i][0], rightPts[i][1]);
     ctx.closePath();
     ctx.fill();
-
     if (highlightColor && hiPts.length > 1) {
       ctx.strokeStyle = highlightColor;
       ctx.lineWidth = Math.max(1.2, wStart * 0.22);
@@ -1284,25 +1652,21 @@
     }
   }
 
-  // 繪製精雕立體花樹主幹與透出樹冠的 Y 型優雅分枝
   function drawArtisanalTrunkAndBranches3D(ctx, project, angle, cosA, sinA, treeScale, seasonTheme) {
     const trunkBase = project(0, 0, 0);
     const trunkLower = project(0, 0, 36 * treeScale);
     const trunkMid = project(0, 0, 76 * treeScale);
     const trunkTop = project(0, 0, 128 * treeScale);
 
-    // 1. 地面柔和投射樹影
     ctx.fillStyle = 'rgba(46, 28, 18, 0.16)';
     ctx.beginPath();
     ctx.ellipse(trunkBase.x, trunkBase.y + 3 * treeScale, 34 * treeScale, 15 * treeScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 依視角前後排列 5 條收斂雅緻的抓地樹根
     const sortedRoots = TREE_ROOTS.map((rt) => {
       const ru = Math.cos(rt.angle) * rt.len;
       const rv = Math.sin(rt.angle) * rt.len;
-      const viewY = ru * sinA + rv * cosA;
-      return { ...rt, ru, rv, viewY };
+      return { ...rt, ru, rv, viewY: ru * sinA + rv * cosA };
     }).sort((a, b) => a.viewY - b.viewY);
 
     const drawRoot = (rt) => {
@@ -1310,23 +1674,12 @@
       const pCtrl = project(rt.ru * 0.55 * treeScale, rt.rv * 0.55 * treeScale, (rt.startH * 0.35) * treeScale);
       const pEnd = project(rt.ru * treeScale, rt.rv * treeScale, 0.5 * treeScale);
       drawTaperedLimb3D(ctx, pStart, pCtrl, pEnd, rt.width * treeScale, 2.0 * treeScale, '#4A2C1B', '#784D33');
-
-      ctx.strokeStyle = seasonTheme.grass[1];
-      ctx.lineWidth = Math.max(1.1, 1.35 * treeScale);
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(pEnd.x - 1 * treeScale, pEnd.y);
-      ctx.quadraticCurveTo(pEnd.x - 2.5 * treeScale, pEnd.y - 3.5 * treeScale, pEnd.x - 3.5 * treeScale, pEnd.y - 5.5 * treeScale);
-      ctx.moveTo(pEnd.x + 1.5 * treeScale, pEnd.y + 0.5 * treeScale);
-      ctx.quadraticCurveTo(pEnd.x + 3 * treeScale, pEnd.y - 3 * treeScale, pEnd.x + 4 * treeScale, pEnd.y - 5 * treeScale);
-      ctx.stroke();
     };
 
     sortedRoots.filter(r => r.viewY < 0).forEach(drawRoot);
 
-    // 計算並排序所有 1 級與 2 級 Y 字細枝
     const branchQueue = [];
-    TREE_BOUGHS.forEach((b, bIdx) => {
+    TREE_BOUGHS.forEach((b) => {
       if (!b.drawBranch) return;
       const frac = b.branchEndFrac || 0.68;
       const p0 = project(0, 0, b.branchStartH * treeScale);
@@ -1335,27 +1688,11 @@
       const p1 = project(eu * 0.45 * treeScale, ev * 0.45 * treeScale, (b.branchStartH + (b.h - 20 - b.branchStartH) * 0.50) * treeScale);
       const p2 = project(eu * treeScale, ev * treeScale, (b.h - 18) * treeScale);
       const viewY = eu * sinA + ev * cosA;
-      branchQueue.push({ p0, p1, p2, wStart: b.branchW * treeScale, wEnd: 2.3 * treeScale, viewY, b, bIdx });
-
-      if (b.branchW >= 6.0) {
-        const perpU = -ev * 0.30;
-        const perpV = eu * 0.30;
-        const twigMidU = eu * 0.60;
-        const twigMidV = ev * 0.60;
-        const twigMidH = b.branchStartH + (b.h - 20 - b.branchStartH) * 0.64;
-        const tp0 = project(twigMidU * treeScale, twigMidV * treeScale, twigMidH * treeScale);
-        const tpCtrl = project((eu * 0.85 + perpU * 0.5) * treeScale, (ev * 0.85 + perpV * 0.5) * treeScale, (b.h - 16) * treeScale);
-        const tpEnd = project((eu + perpU) * treeScale, (ev + perpV) * treeScale, (b.h - 8) * treeScale);
-        branchQueue.push({ p0: tp0, p1: tpCtrl, p2: tpEnd, wStart: (b.branchW * 0.46) * treeScale, wEnd: 1.4 * treeScale, viewY: viewY + 0.01 });
-      }
+      branchQueue.push({ p0, p1, p2, wStart: b.branchW * treeScale, wEnd: 2.3 * treeScale, viewY });
     });
     branchQueue.sort((a, b) => a.viewY - b.viewY);
+    branchQueue.filter(br => br.viewY < 0).forEach(br => drawTaperedLimb3D(ctx, br.p0, br.p1, br.p2, br.wStart, br.wEnd, '#452919', '#6D442C'));
 
-    branchQueue.filter(br => br.viewY < 0).forEach((br) => {
-      drawTaperedLimb3D(ctx, br.p0, br.p1, br.p2, br.wStart, br.wEnd, '#452919', '#6D442C');
-    });
-
-    // 2. 溫潤有機曲線主樹幹 (修長優雅帶樹紋裂痕與迷你樹節)
     ctx.fillStyle = '#3E2315';
     ctx.beginPath();
     ctx.moveTo(trunkBase.x - 18 * treeScale, trunkBase.y + 2 * treeScale);
@@ -1375,59 +1712,19 @@
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = '#85563B';
-    ctx.beginPath();
-    ctx.moveTo(trunkBase.x - 10 * treeScale, trunkBase.y + 1 * treeScale);
-    ctx.quadraticCurveTo(trunkMid.x - 4.5 * treeScale, trunkMid.y, trunkTop.x - 2.6 * treeScale, trunkTop.y);
-    ctx.lineTo(trunkTop.x + 2 * treeScale, trunkTop.y);
-    ctx.quadraticCurveTo(trunkMid.x + 1 * treeScale, trunkMid.y, trunkBase.x - 1.5 * treeScale, trunkBase.y + 1 * treeScale);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = '#3C2113';
-    ctx.lineWidth = Math.max(1, 1.3 * treeScale);
-    for (let bi = 0; bi < 3; bi++) {
-      const sinB = Math.sin(angle + bi * 1.45 - 0.6);
-      const bxBottom = trunkBase.x + sinB * 10 * treeScale;
-      const bxMid = trunkMid.x + sinB * 6 * treeScale;
-      const bxTop = trunkTop.x + sinB * 4 * treeScale;
-      ctx.beginPath();
-      ctx.moveTo(bxBottom, trunkBase.y - 6 * treeScale);
-      ctx.quadraticCurveTo(bxMid, trunkMid.y, bxTop, trunkTop.y + 10 * treeScale);
-      ctx.stroke();
-    }
-
-    // 迷你雅緻樹節
-    const knotX = trunkLower.x + 4.5 * treeScale;
-    const knotY = trunkLower.y - 18 * treeScale;
-    ctx.fillStyle = '#8E5E42';
-    ctx.beginPath();
-    ctx.ellipse(knotX + 0.6 * treeScale, knotY, 4.4 * treeScale, 6.2 * treeScale, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#2B160B';
-    ctx.beginPath();
-    ctx.ellipse(knotX, knotY, 3.1 * treeScale, 4.8 * treeScale, 0, 0, Math.PI * 2);
-    ctx.fill();
-
     sortedRoots.filter(r => r.viewY >= 0).forEach(drawRoot);
-
-    branchQueue.filter(br => br.viewY >= 0).forEach((br) => {
-      drawTaperedLimb3D(ctx, br.p0, br.p1, br.p2, br.wStart, br.wEnd, '#4D2D1B', '#7C4F35');
-    });
+    branchQueue.filter(br => br.viewY >= 0).forEach(br => drawTaperedLimb3D(ctx, br.p0, br.p1, br.p2, br.wStart, br.wEnd, '#4D2D1B', '#7C4F35'));
   }
 
-  // 主畫布渲染迴圈 (V6 靜態等距櫻樹 · 透枝輕盈花瓣 · 兩階段落葉因果轉場)
   function renderTreeQrStudioFrame(timestamp) {
     const canvas = document.getElementById('treeQrInteractiveCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
-
     const dt = treeQrState.lastTime ? Math.min(0.05, (timestamp - treeQrState.lastTime) / 1000) : 0.016;
     treeQrState.lastTime = timestamp;
 
-    // 1. 二幕舞台時間軸 morphTime ∈ [0, 1]（約 1.30 秒流暢演繹「落葉填格 → 升正成碼」）
     const target = treeQrState.targetP;
     if (treeQrState.morphTime !== target) {
       const step = target > treeQrState.morphTime ? dt / 1.30 : -dt / 1.15;
@@ -1438,25 +1735,19 @@
     const u = treeQrState.morphTime;
     treeQrState.morphP = u;
 
-    // Stage 1 (u ∈ [0, 0.48]): 鏡頭鎖定等距角度，全數花瓣波浪旋落並嵌入地面 QR 石磚槽
-    // Stage 2 (u ∈ [0.46, 0.98]): 光禿枝幹淡出，鑲滿彩色葉磚的島嶼轉正為 2D QR Code
     const camP = smoothstep(0.46, 0.98, u);
     const trunkVis = 1 - smoothstep(0.38, 0.64, u);
-
     const palette = TREE_QR_PALETTES[treeQrState.colorKey] || TREE_QR_PALETTES.pink;
     const seasonTheme = SEASON_THEMES[treeQrState.season] || SEASON_THEMES.spring;
 
-    // 清爽統一的米白底色 (#F6F2EA)
     ctx.fillStyle = '#F6F2EA';
     ctx.fillRect(0, 0, W, H);
-
     if (!treeQrState.qrModel) {
       rebuildQrAndTreeGeometry(treeQrState.url);
       if (!treeQrState.qrModel) return;
     }
 
     const count = treeQrState.qrModel.getModuleCount();
-
     const angle = (1 - camP) * (Math.PI / 4);
     const cosA = Math.cos(angle);
     const sinA = Math.sin(angle);
@@ -1466,21 +1757,17 @@
     const centerY = 368 - 108 * camP;
 
     function project(pu, pv, ph = 0) {
-      const xr = (pu * cosA - pv * sinA) * radius;
-      const yr = (pu * sinA + pv * cosA) * radius * tiltY;
       return {
-        x: centerX + xr,
-        y: centerY + yr - ph
+        x: centerX + (pu * cosA - pv * sinA) * radius,
+        y: centerY + (pu * sinA + pv * cosA) * radius * tiltY - ph
       };
     }
 
-    // 2. 固定等距視角島嶼側面厚度 (左前受光面 / 右前微陰面)
     if (camP < 0.99) {
       const slabDepth = 16 * (1 - camP);
       const drawSlabSide = (uA, vA, uB, vB, stoneColor, grassColor) => {
         const pA = project(uA, vA, 0);
         const pB = project(uB, vB, 0);
-
         ctx.beginPath();
         ctx.moveTo(pA.x, pA.y);
         ctx.lineTo(pB.x, pB.y);
@@ -1489,7 +1776,6 @@
         ctx.closePath();
         ctx.fillStyle = stoneColor;
         ctx.fill();
-
         ctx.beginPath();
         ctx.moveTo(pA.x, pA.y);
         ctx.lineTo(pB.x, pB.y);
@@ -1503,13 +1789,11 @@
       drawSlabSide(1, 1, 1, -1, '#99958B', seasonTheme.slabGrassRight);
     }
 
-    // 3. 繪製地面石板底座（含落葉時同步點亮的 QR 磚槽）
     const subCount = count * 2;
     for (let r = 0; r < count; r++) {
       for (let c = 0; c < count; c++) {
         const isDark = treeQrState.qrModel.isDark(r, c);
         const isFinder = isFinderModule(r, c, count);
-
         for (let sr = 0; sr < 2; sr++) {
           for (let sc = 0; sc < 2; sc++) {
             const gr = r * 2 + sr;
@@ -1518,22 +1802,17 @@
             const v0 = (gr / subCount) * 2 - 1;
             const u1 = ((gc + 1.04) / subCount) * 2 - 1;
             const v1 = ((gr + 1.04) / subCount) * 2 - 1;
-
             const qrColor = getModuleSubPixelColor(r, c, sr, sc, count, isDark, palette, seasonTheme);
             let tileColor = qrColor;
-
             if (!isFinder && isDark) {
               const restStone = hash2D(gr, gc, 55) > 0.5 ? '#D8D4C9' : '#CECAC0';
-              const socketHintColor = lerpHexColor(restStone, '#C2BCB0', smoothstep(0.02, 0.18, u) * (1 - smoothstep(0.42, 0.56, u)));
-              const settleT = smoothstep(0.24, 0.50, u);
-              tileColor = lerpHexColor(socketHintColor, qrColor, settleT);
+              const socketHint = lerpHexColor(restStone, '#C2BCB0', smoothstep(0.02, 0.18, u) * (1 - smoothstep(0.42, 0.56, u)));
+              tileColor = lerpHexColor(socketHint, qrColor, smoothstep(0.24, 0.50, u));
             }
-
             const pt0 = project(u0, v0, 0);
             const pt1 = project(u1, v0, 0);
             const pt2 = project(u1, v1, 0);
             const pt3 = project(u0, v1, 0);
-
             ctx.fillStyle = tileColor;
             ctx.beginPath();
             ctx.moveTo(pt0.x, pt0.y);
@@ -1547,16 +1826,13 @@
       }
     }
 
-    // 4. 繪製地面搖曳草叢與季節點綴 (跟隨轉正動作柔和淡出)
     const floraVis = 1 - smoothstep(0.45, 0.82, u);
     if (floraVis > 0.01) {
       ctx.save();
       ctx.globalAlpha = floraVis;
-
       const breeze = Math.sin(timestamp * 0.0028) * 3.5;
       const gScale = seasonTheme.grassScale || 1.0;
-
-      treeQrState.grassBlades.forEach((gb, idx) => {
+      treeQrState.grassBlades.forEach((gb) => {
         const base = project(gb.u, gb.v, 0);
         const h = gb.height * gScale * floraVis;
         const sway = Math.sin(timestamp * 0.0032 + gb.phase) * 2.5 + breeze * 0.55;
@@ -1566,18 +1842,7 @@
         ctx.moveTo(base.x, base.y);
         ctx.quadraticCurveTo(base.x + (gb.lean + sway) * 0.5, base.y - h * 0.55, base.x + gb.lean + sway, base.y - h);
         ctx.stroke();
-
-        if (treeQrState.season === 'summer' && idx % 2 === 0) {
-          const h2 = h * 0.78;
-          ctx.strokeStyle = seasonTheme.grass[(gb.shade + 1) % 4];
-          ctx.lineWidth = 2.0;
-          ctx.beginPath();
-          ctx.moveTo(base.x + 2, base.y);
-          ctx.quadraticCurveTo(base.x - (gb.lean - sway) * 0.4, base.y - h2 * 0.5, base.x - gb.lean * 0.7 + sway, base.y - h2);
-          ctx.stroke();
-        }
       });
-
       treeQrState.seasonAccents.forEach((acc) => {
         const color = seasonTheme.accentColors[acc.colorIdx];
         if (seasonTheme.accentType === 'flowers') {
@@ -1586,64 +1851,37 @@
           ctx.fillStyle = color;
           ctx.fillRect(pt.x - s * 0.7, pt.y - s * 0.25, s * 1.4, s * 0.5);
           ctx.fillRect(pt.x - s * 0.25, pt.y - s * 0.7, s * 0.5, s * 1.4);
-          ctx.fillStyle = '#FFE066';
-          ctx.fillRect(pt.x - s * 0.22, pt.y - s * 0.22, s * 0.44, s * 0.44);
         } else if (seasonTheme.accentType === 'fireflies') {
           const bob = Math.sin(timestamp * 0.004 + acc.phase) * 8;
           const pt = project(acc.u, acc.v, (acc.floatH + bob) * floraVis);
           const pulse = 0.45 + 0.55 * Math.sin(timestamp * 0.006 + acc.phase * 2);
-          const s = acc.size * (0.8 + pulse * 0.5) * floraVis;
           ctx.fillStyle = color;
           ctx.globalAlpha = pulse * floraVis;
-          ctx.fillRect(pt.x - s / 2, pt.y - s / 2, s, s);
+          ctx.fillRect(pt.x - acc.size / 2, pt.y - acc.size / 2, acc.size, acc.size);
           ctx.globalAlpha = floraVis;
         } else if (seasonTheme.accentType === 'maple') {
           const pt = project(acc.u * 0.85, acc.v * 0.85, 1.5 * floraVis);
-          const s = acc.size * 1.25 * floraVis;
           ctx.fillStyle = color;
-          ctx.fillRect(pt.x - s * 0.6, pt.y - s * 0.35, s * 1.2, s * 0.7);
+          ctx.fillRect(pt.x - acc.size * 0.6, pt.y - acc.size * 0.35, acc.size * 1.2, acc.size * 0.7);
         }
       });
-
-      for (let i = 0; i < 32; i++) {
-        const ang = hash2D(i, 91, 3) * Math.PI * 2;
-        const r = 0.14 + hash2D(i, 92, 4) * 0.42;
-        const pt = project(Math.cos(ang) * r, Math.sin(ang) * r, 1);
-        ctx.fillStyle = palette.foliage[2 + (i % 3)];
-        ctx.fillRect(pt.x - 2.6 * floraVis, pt.y - 1.4 * floraVis, 5.2 * floraVis, 2.8 * floraVis);
-      }
-
       ctx.restore();
     }
 
-    // 5. 因果連線落葉演出：「清透花瓣脫枝旋落 → 精準貼合填滿地面 QR 棋盤四邊形！」
     const orderedLeaves = treeQrState.leafParticles;
     const windX = Math.sin(timestamp * 0.0022) * 2.0;
 
-    const drawLeafOrSettlingTile = (lp) => {
-      // Stage 1: 全數葉片於 u ∈ [0, 0.48] 間完成落入地面格位！
+    const drawLeafOrTile = (lp) => {
       const startU = lp.waveDelay * 0.22;
       const localP = Math.max(0, Math.min(1, (u - startU) / 0.26));
-      const easeP = localP < 0.5
-        ? 2 * localP * localP
-        : 1 - Math.pow(-2 * localP + 2, 2) / 2;
-
+      const easeP = localP < 0.5 ? 2 * localP * localP : 1 - Math.pow(-2 * localP + 2, 2) / 2;
       const swirl = Math.sin(localP * Math.PI) * 0.11 * lp.swirlSign;
       const curU = lp.treeU * (1 - easeP) + lp.qrU * easeP + swirl;
       const curV = lp.treeV * (1 - easeP) + lp.qrV * easeP - swirl * 0.7;
       const curH = lp.treeH * Math.pow(1 - easeP, 1.32);
-
       const pos = project(curU, curV, curH);
       const flutter = (1 - easeP) * (Math.sin(timestamp * 0.0032 + lp.seed) * 1.4 + windX * (lp.treeH / 200));
       const leafColor = palette.foliage[lp.shadeIdx];
-
-      if (localP > 0.25 && easeP < 0.92) {
-        const destCenter = project(lp.qrU, lp.qrV, 0.5);
-        ctx.fillStyle = palette.qrTiles[1];
-        ctx.globalAlpha = Math.sin(((localP - 0.25) / 0.75) * Math.PI) * 0.28;
-        ctx.fillRect(destCenter.x - 2.0, destCenter.y - 1.1, 4.0, 2.2);
-        ctx.globalAlpha = 1;
-      }
 
       if (easeP > 0.74) {
         const embedT = (easeP - 0.74) / 0.26;
@@ -1651,15 +1889,12 @@
         const pt1 = project(lp.u1, lp.v0, 0);
         const pt2 = project(lp.u1, lp.v1, 0);
         const pt3 = project(lp.u0, lp.v1, 0);
-
         const hw = lp.leafW * 0.5;
         const hh = lp.leafH * 0.5;
         const cx = pos.x + flutter;
         const cy = pos.y;
-
-        const targetQrColor = getModuleSubPixelColor(lp.r, lp.c, lp.sr, lp.sc, count, true, palette, seasonTheme);
-        ctx.globalAlpha = 0.88 + 0.12 * embedT;
-        ctx.fillStyle = embedT > 0.05 ? lerpHexColor(leafColor, targetQrColor, embedT) : leafColor;
+        const targetQr = getModuleSubPixelColor(lp.r, lp.c, lp.sr, lp.sc, count, true, palette, seasonTheme);
+        ctx.fillStyle = embedT > 0.05 ? lerpHexColor(leafColor, targetQr, embedT) : leafColor;
         ctx.beginPath();
         ctx.moveTo((cx - hw) * (1 - embedT) + pt0.x * embedT, (cy - hh) * (1 - embedT) + pt0.y * embedT);
         ctx.lineTo((cx + hw) * (1 - embedT) + pt1.x * embedT, (cy - hh) * (1 - embedT) + pt1.y * embedT);
@@ -1667,71 +1902,42 @@
         ctx.lineTo((cx - hw) * (1 - embedT) + pt3.x * embedT, (cy + hh) * (1 - embedT) + pt3.y * embedT);
         ctx.closePath();
         ctx.fill();
-        ctx.globalAlpha = 1;
       } else {
-        if (localP > 0.05 && lp.seed % 5 === 0) {
-          const trailPos = project(curU - swirl * 0.25, curV + swirl * 0.15, curH + 14);
-          ctx.fillStyle = palette.foliage[Math.min(4, lp.shadeIdx + 1)];
-          ctx.globalAlpha = 0.34;
-          ctx.fillRect(trailPos.x - 1.4, trailPos.y - 1.4, 2.8, 2.8);
-        }
-
-        // 在樹冠模式給予柔和空氣通透感 (讓褐枝若隱若現從花瓣隙間透出，正如同影片視覺美學)
-        ctx.globalAlpha = easeP > 0.05 ? 0.94 : (lp.shadeIdx >= 3 ? 0.86 : 0.92);
         ctx.fillStyle = leafColor;
         ctx.fillRect(pos.x + flutter - lp.leafW / 2, pos.y - lp.leafH / 2, lp.leafW, lp.leafH);
-
-        if (easeP < 0.45 && lp.shadeIdx >= 3 && (lp.seed % 3 === 0)) {
-          ctx.fillStyle = palette.foliage[4];
-          ctx.fillRect(pos.x + flutter - lp.leafW * 0.25, pos.y - lp.leafH * 0.5, lp.leafW * 0.5, lp.leafH * 0.4);
-        }
-        ctx.globalAlpha = 1;
       }
     };
 
-    // Painter's Algorithm 分層：背面葉片 -> 精雕樹幹與Y分支 -> 前面輕透花瓣
-    let trunkDrawn = false;
     if (u < 0.55) {
-      for (let i = 0; i < orderedLeaves.length; i++) {
-        if (orderedLeaves[i].isBehindTrunk) drawLeafOrSettlingTile(orderedLeaves[i]);
-      }
-
+      orderedLeaves.forEach(lp => { if (lp.isBehindTrunk) drawLeafOrTile(lp); });
       if (trunkVis > 0.01) {
-        trunkDrawn = true;
         ctx.save();
         ctx.globalAlpha = trunkVis;
         drawArtisanalTrunkAndBranches3D(ctx, project, angle, cosA, sinA, Math.max(0.25, trunkVis), seasonTheme);
         ctx.restore();
       }
-
-      for (let i = 0; i < orderedLeaves.length; i++) {
-        if (!orderedLeaves[i].isBehindTrunk) drawLeafOrSettlingTile(orderedLeaves[i]);
-      }
-    }
-
-    if (!trunkDrawn && trunkVis > 0.01) {
+      orderedLeaves.forEach(lp => { if (!lp.isBehindTrunk) drawLeafOrTile(lp); });
+    } else if (trunkVis > 0.01) {
       ctx.save();
       ctx.globalAlpha = trunkVis;
       drawArtisanalTrunkAndBranches3D(ctx, project, angle, cosA, sinA, Math.max(0.25, trunkVis), seasonTheme);
       ctx.restore();
     }
 
-    // 6. 空中常駐飄落花瓣動態 (樹模式下)
     if (floraVis > 0.05) {
       ctx.save();
       ctx.globalAlpha = floraVis * 0.9;
       treeQrState.floatingPetals.forEach((ptl) => {
         ptl.h -= ptl.speed * dt;
         if (ptl.h < 4) ptl.h = 195;
-        const driftU = ptl.u + Math.sin(timestamp * 0.0025 + ptl.phase) * 0.09;
-        const pos = project(driftU * floraVis, ptl.v * floraVis, ptl.h * floraVis);
+        const pos = project((ptl.u + Math.sin(timestamp * 0.0025 + ptl.phase) * 0.09) * floraVis, ptl.v * floraVis, ptl.h * floraVis);
         ctx.fillStyle = palette.foliage[ptl.shade];
-        ctx.fillRect(pos.x - 3.0 * floraVis, pos.y - 2.0 * floraVis, 6.0 * floraVis, 4.0 * floraVis);
+        ctx.fillRect(pos.x - 3 * floraVis, pos.y - 2 * floraVis, 6 * floraVis, 4 * floraVis);
       });
       ctx.restore();
     }
 
-    if (standeeModal && standeeModal.classList.contains('open')) {
+    if (standeeModal && standeeModal.open && activeQrStudioTab === 'tree') {
       treeQrState.animFrameId = requestAnimationFrame(renderTreeQrStudioFrame);
     }
   }
@@ -1764,15 +1970,17 @@
       playSound(nextMode === 'qr' ? 'treeToQr' : 'qrToTree');
       setTreeQrMode(nextMode, false);
     };
-
     if (canvasContainer) canvasContainer.addEventListener('click', toggleAction);
     if (togglePill) togglePill.addEventListener('click', toggleAction);
 
     if (urlInput) {
       urlInput.addEventListener('input', () => {
         const val = urlInput.value.trim() || FIXED_QUIZ_GITHUB_URL;
+        const bwUrlInput = document.getElementById('bwQrUrlInput');
+        if (bwUrlInput) bwUrlInput.value = val;
         treeQrState.url = val;
         rebuildQrAndTreeGeometry(val);
+        renderBwQrCanvas();
         renderCardFooterQR();
       });
     }
@@ -1800,9 +2008,7 @@
     if (treeSoundBtn) {
       treeSoundBtn.addEventListener('click', () => {
         isSoundEnabled = !isSoundEnabled;
-        treeSoundBtn.innerHTML = isSoundEnabled
-          ? '<i class="fas fa-volume-up"></i>'
-          : '<i class="fas fa-volume-mute"></i>';
+        treeSoundBtn.innerHTML = isSoundEnabled ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
         if (isSoundEnabled) playSound('qrToTree');
       });
     }
@@ -1810,13 +2016,11 @@
     rebuildQrAndTreeGeometry(FIXED_QUIZ_GITHUB_URL);
   }
 
-  // 將高解析「像素花園 QR Code」繪製至任意指定 Canvas (供下載、列印與拍立得結果卡使用)
   function createPixelGardenQrCanvas(sizePx, urlText, colorKey, seasonKey) {
     const outCanvas = document.createElement('canvas');
     outCanvas.width = sizePx;
     outCanvas.height = sizePx;
     const ctx = outCanvas.getContext('2d');
-
     const model = new QRCode.QRCodeModel(-1, QRCode.CorrectLevel.H);
     model.addData((urlText || FIXED_QUIZ_GITHUB_URL).trim());
     model.make();
@@ -1824,7 +2028,6 @@
     const count = model.getModuleCount();
     const palette = TREE_QR_PALETTES[colorKey || treeQrState.colorKey] || TREE_QR_PALETTES.pink;
     const seasonTheme = SEASON_THEMES[seasonKey || treeQrState.season] || SEASON_THEMES.spring;
-
     const quietModules = 3;
     const totalSub = (count + quietModules * 2) * 2;
     const cellPx = sizePx / totalSub;
@@ -1837,10 +2040,9 @@
         const isDark = model.isDark(r, c);
         for (let sr = 0; sr < 2; sr++) {
           for (let sc = 0; sc < 2; sc++) {
-            const color = getModuleSubPixelColor(r, c, sr, sc, count, isDark, palette, seasonTheme);
+            ctx.fillStyle = getModuleSubPixelColor(r, c, sr, sc, count, isDark, palette, seasonTheme);
             const x = ((c + quietModules) * 2 + sc) * cellPx;
             const y = ((r + quietModules) * 2 + sr) * cellPx;
-            ctx.fillStyle = color;
             ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(cellPx), Math.ceil(cellPx));
           }
         }
@@ -1859,10 +2061,10 @@
 
     if (standeeQrHolder) {
       standeeQrHolder.innerHTML = '';
-      const qrCanvas = createPixelGardenQrCanvas(260, targetURL, treeQrState.colorKey, treeQrState.season);
-      standeeQrHolder.appendChild(qrCanvas);
+      standeeQrHolder.appendChild(createPixelGardenQrCanvas(260, targetURL, treeQrState.colorKey, treeQrState.season));
     }
 
+    renderBwQrCanvas();
     renderCardFooterQR();
   }
 
@@ -1878,10 +2080,15 @@
     }
   }
 
-  function openStandeeModal() {
-    if (standeeModal) {
-      standeeModal.classList.add('open');
-      renderFixedQRCodes();
+  function openStandeeModal(initialTab) {
+    if (!standeeModal) return;
+    if (!standeeModal.open) standeeModal.showModal();
+    const box = standeeModal.querySelector('.standee-modal-box');
+    if (box) box.scrollTop = 0;
+    if (initialTab === 'tree' || initialTab === 'bw') switchQrStudioTab(initialTab);
+    else switchQrStudioTab(activeQrStudioTab);
+    renderFixedQRCodes();
+    if (activeQrStudioTab === 'tree') {
       if (treeQrState.animFrameId) cancelAnimationFrame(treeQrState.animFrameId);
       treeQrState.lastTime = 0;
       treeQrState.animFrameId = requestAnimationFrame(renderTreeQrStudioFrame);
@@ -1889,43 +2096,154 @@
   }
 
   function closeStandeeModal() {
-    if (standeeModal) standeeModal.classList.remove('open');
-    if (treeQrState.animFrameId) {
-      cancelAnimationFrame(treeQrState.animFrameId);
-      treeQrState.animFrameId = null;
+    if (standeeModal && standeeModal.open) standeeModal.close();
+  }
+
+  function switchQrStudioTab(tabName) {
+    activeQrStudioTab = tabName === 'bw' ? 'bw' : 'tree';
+    const tabTree = document.getElementById('tabTreeQrBtn');
+    const tabBw = document.getElementById('tabBwQrBtn');
+    const treePane = document.getElementById('treeQrPane');
+    const bwPane = document.getElementById('bwQrPane');
+
+    const isBw = activeQrStudioTab === 'bw';
+    if (tabTree) { tabTree.classList.toggle('active', !isBw); tabTree.setAttribute('aria-selected', String(!isBw)); }
+    if (tabBw) { tabBw.classList.toggle('active', isBw); tabBw.setAttribute('aria-selected', String(isBw)); }
+    if (treePane) treePane.hidden = isBw;
+    if (bwPane) bwPane.hidden = !isBw;
+
+    if (isBw) {
+      if (treeQrState.animFrameId) {
+        cancelAnimationFrame(treeQrState.animFrameId);
+        treeQrState.animFrameId = null;
+      }
+      renderBwQrCanvas();
+    } else if (standeeModal && standeeModal.open) {
+      if (treeQrState.animFrameId) cancelAnimationFrame(treeQrState.animFrameId);
+      treeQrState.lastTime = 0;
+      treeQrState.animFrameId = requestAnimationFrame(renderTreeQrStudioFrame);
     }
   }
 
-  function copyQuizLink() {
+  // ─────────────────────────────────────────────────────────
+  // 10. 黑白高對比列印 QR Code 生成
+  // ─────────────────────────────────────────────────────────
+  function createBwQrCanvas(sizePx, urlText) {
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = sizePx;
+    outCanvas.height = sizePx;
+    const ctx = outCanvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, sizePx, sizePx);
+
+    if (typeof QRCode === 'undefined' || !QRCode.QRCodeModel) return outCanvas;
+    const model = new QRCode.QRCodeModel(-1, QRCode.CorrectLevel.H);
+    model.addData((urlText || FIXED_QUIZ_GITHUB_URL).trim());
+    model.make();
+
+    const count = model.getModuleCount();
+    const quietModules = 4;
+    const totalModules = count + quietModules * 2;
+    const cell = sizePx / totalModules;
+
+    ctx.fillStyle = '#000000';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (!model.isDark(r, c)) continue;
+        const x1 = Math.floor((c + quietModules) * cell);
+        const y1 = Math.floor((r + quietModules) * cell);
+        const x2 = Math.ceil((c + quietModules + 1) * cell);
+        const y2 = Math.ceil((r + quietModules + 1) * cell);
+        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      }
+    }
+    return outCanvas;
+  }
+
+  function renderBwQrCanvas() {
+    const targetURL = getQuizURL();
+    const canvas = document.getElementById('bwQrCanvas');
+    const urlDisplay = document.getElementById('bwPrintUrlDisplay');
+    const bwInput = document.getElementById('bwQrUrlInput');
+    if (bwInput && bwInput.value.trim() !== targetURL) bwInput.value = targetURL;
+    if (urlDisplay) urlDisplay.textContent = targetURL;
+    if (!canvas) return;
+    const generated = createBwQrCanvas(420, targetURL);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(generated, 0, 0, canvas.width, canvas.height);
+  }
+
+  function downloadBwRawQrPng() {
     playSound('tap');
-    const url = getQuizURL();
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('🔗 測驗專屬連結已成功複製！');
-      }).catch(() => {
-        fallbackCopy(url);
-      });
-    } else {
-      fallbackCopy(url);
-    }
+    const hiRes = createBwQrCanvas(1200, getQuizURL());
+    const a = document.createElement('a');
+    a.download = 'MapMo-心理測驗-純黑白QRCode.png';
+    a.href = hiRes.toDataURL('image/png');
+    a.click();
+    showToast('⬛ 純黑白高解析 QR Code 已下載！');
   }
 
-  function fallbackCopy(text) {
-    const input = document.createElement('input');
-    input.value = text;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    document.body.removeChild(input);
-    showToast('🔗 測驗專屬連結已成功複製！');
+  function downloadBwPosterPng() {
+    playSound('tap');
+    const W = 1200;
+    const H = 1560;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+    drawRoundRect(ctx, 56, 56, W - 112, H - 112, 36, '#FFFFFF', '#000000', 8);
+
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.font = '900 36px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillText('MAPMO · 你是哪一種社群派？', W / 2, 168);
+
+    const subtitleInput = document.getElementById('bwQrTitleInput');
+    const titleStr = (subtitleInput && subtitleInput.value.trim()) || '掃描測出你的社群派別';
+    ctx.font = '900 50px "Noto Sans TC", sans-serif';
+    wrapText(ctx, titleStr, W / 2, 260, W - 200, 66);
+
+    const qrFrameSize = 800;
+    const qrBoxX = (W - qrFrameSize) / 2;
+    const qrBoxY = 360;
+    drawRoundRect(ctx, qrBoxX, qrBoxY, qrFrameSize, qrFrameSize, 24, '#FFFFFF', '#000000', 6);
+    ctx.drawImage(createBwQrCanvas(760, getQuizURL()), qrBoxX + 20, qrBoxY + 20, 760, 760);
+
+    ctx.fillStyle = '#111111';
+    ctx.font = '700 30px "Noto Sans TC", sans-serif';
+    ctx.fillText('打開手機相機對準黑白條碼即可開始 · 11 題約 2 分鐘', W / 2, 1260);
+    ctx.font = '700 26px "Outfit", monospace';
+    ctx.fillText(getQuizURL(), W / 2, 1340);
+
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(140, 1390);
+    ctx.lineTo(W - 140, 1390);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = '700 22px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#333333';
+    ctx.fillText('© 2026 MapMo 全匿名地理情緒樹洞', W / 2, 1445);
+
+    const a = document.createElement('a');
+    a.download = 'MapMo-心理測驗-黑白列印海報立牌.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('🖨️ 黑白高對比列印海報已下載！');
   }
 
   function downloadPureQRCode() {
     playSound('tap');
-    const hiResCanvas = createPixelGardenQrCanvas(1200, getQuizURL(), treeQrState.colorKey, treeQrState.season);
     const a = document.createElement('a');
     a.download = `MapMo-像素花園QRCode-${treeQrState.colorKey}.png`;
-    a.href = hiResCanvas.toDataURL('image/png');
+    a.href = createPixelGardenQrCanvas(1200, getQuizURL(), treeQrState.colorKey, treeQrState.season).toDataURL('image/png');
     a.click();
     showToast('📥 像素花園 QR Code 高解析圖檔已下載！');
   }
@@ -1942,242 +2260,893 @@
     showToast(`📥 ${modeLabel} 畫面已成功下載！`);
   }
 
-  function showToast(msg) {
-    let toast = document.getElementById('quizToast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'quizToast';
-      toast.className = 'quiz-toast';
-      document.body.appendChild(toast);
-    }
-    toast.innerHTML = msg;
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2500);
-  }
-
-  // 11. 2X 高解析 Canvas 測驗結果卡片匯出 (Instagram 4:5 / 列印專用)
-  function exportResultCardImage() {
+  function copyQuizLink() {
     playSound('tap');
-    if (!currentResult) return;
-
-    showToast('🎨 正在生成 2X 高解析社群分享圖...');
-
-    // 建立 1080 x 1440 專業 IG 尺寸的高畫質離屏 Canvas
-    const canvas = document.createElement('canvas');
-    const W = 1080;
-    const H = 1440;
-    canvas.width = W;
-    canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    // 1. 背景與卡片基底
-    ctx.fillStyle = '#FAF9F6';
-    ctx.fillRect(0, 0, W, H);
-
-    // 拍立得相紙主體 (白色圓角卡片)
-    const cardX = 60;
-    const cardY = 60;
-    const cardW = W - 120;
-    const cardH = H - 120;
-    drawRoundRect(ctx, cardX, cardY, cardW, cardH, 36, '#FFFFFF', '#1C1C1E', 3);
-
-    // 頂部膠帶意象
-    ctx.fillStyle = currentResult.badgeColor + '55';
-    ctx.fillRect(W / 2 - 90, cardY - 14, 180, 32);
-
-    // 2. 品牌 Header
-    ctx.fillStyle = '#1C1C1E';
-    ctx.font = '900 24px "Outfit", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('MAPMO ARCHIVE · 2026', cardX + 40, cardY + 65);
-
-    ctx.textAlign = 'right';
-    ctx.font = '700 20px "Outfit", sans-serif';
-    ctx.fillStyle = '#8E8E93';
-    ctx.fillText(`NO. ${currentResult.id.toUpperCase()}-7788`, cardX + cardW - 40, cardY + 65);
-
-    // 虛線分隔線
-    ctx.strokeStyle = '#E5E5EA';
-    ctx.setLineDash([8, 8]);
-    ctx.beginPath();
-    ctx.moveTo(cardX + 40, cardY + 95);
-    ctx.lineTo(cardX + cardW - 40, cardY + 95);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 3. 派系核心稱號
-    ctx.textAlign = 'center';
-
-    // 徽章
-    drawRoundRect(ctx, W / 2 - 130, cardY + 130, 260, 46, 23, currentResult.badgeColor);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 20px "Noto Sans TC", sans-serif';
-    ctx.fillText(currentResult.emotionLabel, W / 2, cardY + 160);
-
-    // 大標題
-    ctx.fillStyle = currentResult.badgeColor;
-    ctx.font = '900 58px "Noto Sans TC", sans-serif';
-    ctx.fillText(`｜${currentResult.name}｜`, W / 2, cardY + 245);
-
-    // 稱號
-    ctx.fillStyle = '#48484A';
-    ctx.font = '700 26px "Noto Sans TC", sans-serif';
-    ctx.fillText(currentResult.tagline, W / 2, cardY + 295);
-
-    // 4. 靈魂金句色塊
-    const quoteBoxY = cardY + 340;
-    drawRoundRect(ctx, cardX + 40, quoteBoxY, cardW - 80, 110, 20, '#FAF9F6');
-    // 左側色條
-    ctx.fillStyle = currentResult.badgeColor;
-    ctx.fillRect(cardX + 40, quoteBoxY, 8, 110);
-
-    ctx.textAlign = 'left';
-    ctx.font = 'italic 500 22px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#2C2C2E';
-    wrapText(ctx, currentResult.soulQuote, cardX + 70, quoteBoxY + 50, cardW - 140, 36);
-
-    // 5. 社群現狀文字
-    const statusY = quoteBoxY + 140;
-    drawRoundRect(ctx, cardX + 40, statusY, cardW - 80, 100, 20, '#FFFFFF', '#E5E5EA', 2);
-    ctx.fillStyle = '#1C1C1E';
-    ctx.font = 'bold 20px "Noto Sans TC", sans-serif';
-    ctx.fillText('社群現狀剖析：', cardX + 65, statusY + 38);
-    ctx.fillStyle = '#48484A';
-    ctx.font = '500 18px "Noto Sans TC", sans-serif';
-    wrapText(ctx, currentResult.status, cardX + 65, statusY + 72, cardW - 130, 28);
-
-    // 6. 三維特質能量條
-    const dimY = statusY + 135;
-    ctx.font = 'bold 22px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#1C1C1E';
-    ctx.fillText('三維社群能量指數', cardX + 40, dimY);
-
-    const dims = [
-      currentResult.dimensions.record,
-      currentResult.dimensions.awareness,
-      currentResult.dimensions.share
-    ];
-    dims.forEach((d, i) => {
-      const rowY = dimY + 36 + i * 54;
-      ctx.font = '600 18px "Noto Sans TC", sans-serif';
-      ctx.fillStyle = '#48484A';
-      ctx.fillText(d.label, cardX + 40, rowY + 16);
-
-      ctx.textAlign = 'right';
-      ctx.font = 'bold 18px "Outfit", sans-serif';
-      ctx.fillStyle = d.color;
-      ctx.fillText(`${d.value}%`, cardX + cardW - 40, rowY + 16);
-      ctx.textAlign = 'left';
-
-      // 能量軌道與填色
-      const trackW = cardW - 80;
-      drawRoundRect(ctx, cardX + 40, rowY + 26, trackW, 12, 6, '#E5E5EA');
-      const fillW = (trackW * d.value) / 100;
-      drawRoundRect(ctx, cardX + 40, rowY + 26, fillW, 12, 6, d.color);
-    });
-
-    // 7. 適合 MapMo 功能
-    const featY = dimY + 225;
-    ctx.font = '900 22px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#1C1C1E';
-    ctx.fillText('最適合你的 MapMo 專屬功能：', cardX + 40, featY);
-
-    const allFeats = currentResult.features.primary;
-    allFeats.forEach((f, idx) => {
-      const fy = featY + 26 + idx * 72;
-      drawRoundRect(ctx, cardX + 40, fy, cardW - 80, 62, 14, '#FAF9F6', '#E5E5EA', 1.5);
-      ctx.font = 'bold 18px "Noto Sans TC", sans-serif';
-      ctx.fillStyle = '#1C1C1E';
-      ctx.fillText(`✦ ${f.name}（主要適合）`, cardX + 60, fy + 26);
-      ctx.font = '500 14px "Noto Sans TC", sans-serif';
-      ctx.fillStyle = '#6E6E73';
-      ctx.fillText(f.desc.slice(0, 36) + '...', cardX + 60, fy + 48);
-    });
-
-    // 8. 底部 QR Code 導流區
-    const footY = cardY + cardH - 120;
-    ctx.strokeStyle = '#E5E5EA';
-    ctx.beginPath();
-    ctx.moveTo(cardX + 40, footY);
-    ctx.lineTo(cardX + cardW - 40, footY);
-    ctx.stroke();
-
-    ctx.font = 'bold 20px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#1C1C1E';
-    ctx.fillText('掃描 QR Code · 測出你的社群靈魂', cardX + 40, footY + 45);
-    ctx.font = '500 15px "Outfit", sans-serif';
-    ctx.fillStyle = '#6366F1';
-    ctx.fillText(getQuizURL(), cardX + 40, footY + 75);
-
-    // 繪製 QR Code (從 cardFooterQrHolder 讀取 canvas)
-    const qrCanvas = cardFooterQrHolder ? cardFooterQrHolder.querySelector('canvas') : null;
-    if (qrCanvas) {
-      ctx.drawImage(qrCanvas, cardX + cardW - 130, footY + 15, 90, 90);
+    const url = getQuizURL();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showToast('🔗 測驗專屬連結已複製！')).catch(() => fallbackCopy(url));
+    } else {
+      fallbackCopy(url);
     }
-
-    // 匯出圖檔
-    setTimeout(() => {
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.download = `MapMo社群人格-${currentResult.name}.png`;
-        a.href = url;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('🎉 結果圖片已成功匯出至下載資料夾！');
-      }, 'image/png');
-    }, 200);
   }
 
-  // Canvas 繪製圓角矩形 Helper
-  function drawRoundRect(ctx, x, y, width, height, radius, fillColor, strokeColor, lineWidth) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-
-    if (fillColor) {
-      ctx.fillStyle = fillColor;
-      ctx.fill();
-    }
-    if (strokeColor && lineWidth) {
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = lineWidth;
-      ctx.stroke();
-    }
-    ctx.restore();
+  function fallbackCopy(text) {
+    const input = document.createElement('input');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    showToast('🔗 專屬連結已複製！');
   }
 
-  // Canvas 文字自動換行 Helper
-  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const chars = text.split('');
-    let line = '';
-    let currentY = y;
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('toastNotification');
+    const msgEl = document.getElementById('toastMessage');
+    if (!toast) return;
+    if (msgEl) msgEl.textContent = msg;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
 
-    for (let n = 0; n < chars.length; n++) {
-      const testLine = line + chars[n];
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-      if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, x, currentY);
-        line = chars[n];
-        currentY += lineHeight;
-      } else {
-        line = testLine;
+  // ─────────────────────────────────────────────────────────
+  // 11. Google 試算表後台數據引擎 (11 題相似度 + Q11 展板數據 + Excel 匯出)
+  // ─────────────────────────────────────────────────────────
+  function getSheetsEndpointUrl() {
+    const inputEl = document.getElementById('sheetsWebhookInput');
+    const uiVal = inputEl && inputEl.value ? inputEl.value.trim() : '';
+    if (uiVal && /^https:\/\/script\.google\.com\//i.test(uiVal)) return uiVal;
+    try {
+      const saved = (localStorage.getItem(WEBHOOK_STORAGE_KEY) || '').trim();
+      if (saved && /^https:\/\/script\.google\.com\//i.test(saved)) return saved;
+    } catch (_) {}
+    return (GOOGLE_SHEETS_API_URL || '').trim();
+  }
+
+  function initBackendAndStats() {
+    loadCachedData();
+    statsState.isConfigured = Boolean(getSheetsEndpointUrl());
+    renderCrowdStatsUI();
+
+    if (statsState.isConfigured) {
+      fetchSummaryFromSheets(false);
+      flushPendingSubmissions();
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === '1') openAdminModal();
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && getSheetsEndpointUrl()) flushPendingSubmissions();
+    });
+  }
+
+  function loadCachedData() {
+    try {
+      const rawStats = localStorage.getItem(LOCAL_CACHE_STATS_KEY);
+      if (rawStats) statsState.summary = normalizeSummaryCounts(JSON.parse(rawStats));
+      const rawRecs = localStorage.getItem(LOCAL_RECORDS_STORAGE_KEY);
+      if (rawRecs) {
+        const list = JSON.parse(rawRecs);
+        if (Array.isArray(list)) statsState.records = list;
+      }
+    } catch (_) {}
+  }
+
+  function saveCachedSummary(summary) {
+    try { localStorage.setItem(LOCAL_CACHE_STATS_KEY, JSON.stringify(summary)); } catch (_) {}
+  }
+
+  function saveLocalRecords(list) {
+    try { localStorage.setItem(LOCAL_RECORDS_STORAGE_KEY, JSON.stringify(list.slice(0, 500))); } catch (_) {}
+  }
+
+  function normalizeSummaryCounts(obj) {
+    const out = { total: 0, lurker: 0, diarist: 0, stealth: 0, curator: 0, freespirit: 0 };
+    let sum = 0;
+    PERSONA_ORDER.forEach((id) => {
+      const n = Math.max(0, parseInt(obj && obj[id] != null ? obj[id] : 0, 10) || 0);
+      out[id] = n;
+      sum += n;
+    });
+    const rawTotal = Math.max(0, parseInt(obj && obj.total != null ? obj.total : 0, 10) || 0);
+    out.total = Math.max(rawTotal, sum);
+    return out;
+  }
+
+  function formatLocalTime(isoOrDate) {
+    if (isoOrDate === '') return '';
+    const cleaned = typeof isoOrDate === 'string'
+      ? isoOrDate.replace(/\s*\([^)]*\)$/, '').trim()
+      : isoOrDate;
+    if (cleaned === '') return '';
+    const d = cleaned != null ? new Date(cleaned) : new Date();
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  async function fetchSummaryFromSheets(includeRecords = false) {
+    const endpoint = getSheetsEndpointUrl();
+    statsState.isConfigured = Boolean(endpoint);
+    if (!endpoint) {
+      statsState.isSyncing = false;
+      statsState.isOnline = false;
+      renderCrowdStatsUI(currentEvaluation ? currentEvaluation.mainPersonaId : null);
+      if (adminModal && adminModal.open) {
+        renderAdminKpisAndSummary();
+        renderAdminRecordsTable();
+      }
+      return;
+    }
+
+    statsState.isSyncing = true;
+    statsState.isLoadingRecords = includeRecords;
+    const sep = endpoint.includes('?') ? '&' : '?';
+    const url = includeRecords ? `${endpoint}${sep}includeRecords=1` : endpoint;
+
+    try {
+      const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json && json.summary) {
+        statsState.summary = normalizeSummaryCounts(json.summary);
+        saveCachedSummary(statsState.summary);
+      }
+      if (includeRecords && Array.isArray(json.records)) {
+        statsState.records = json.records.map(r => ({
+          ...r,
+          createdAtLocal: r.createdAtLocal ? (formatLocalTime(r.createdAtLocal) || r.createdAtLocal) : ''
+        }));
+        saveLocalRecords(statsState.records);
+      }
+      statsState.isOnline = true;
+    } catch (_) {
+      statsState.isOnline = false;
+    } finally {
+      statsState.isSyncing = false;
+      statsState.isLoadingRecords = false;
+      renderCrowdStatsUI(currentEvaluation ? currentEvaluation.mainPersonaId : null);
+      if (adminModal && adminModal.open) {
+        renderAdminKpisAndSummary();
+        if (includeRecords) renderAdminRecordsTable();
       }
     }
-    ctx.fillText(line, x, currentY);
   }
+
+  function getDeviceLabel() {
+    const w = window.innerWidth || 1024;
+    if (w < 640) return '手機';
+    if (w <= 1024) return '平板';
+    return '電腦';
+  }
+
+  function getPendingQueue() {
+    try {
+      const raw = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (_) { return []; }
+  }
+
+  function savePendingQueue(list) {
+    try { localStorage.setItem(PENDING_SYNC_STORAGE_KEY, JSON.stringify(list)); } catch (_) {}
+  }
+
+  async function postQuizRecordToSheets(payload) {
+    const endpoint = getSheetsEndpointUrl();
+    if (!endpoint) throw new Error('SHEETS_NOT_CONFIGURED');
+    await fetch(endpoint, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return { ok: true };
+  }
+
+  let isFlushingQueue = false;
+  async function flushPendingSubmissions() {
+    const endpoint = getSheetsEndpointUrl();
+    if (!endpoint || isFlushingQueue) return;
+    const queue = getPendingQueue();
+    if (queue.length === 0) return;
+
+    isFlushingQueue = true;
+    const remaining = [];
+    for (const item of queue) {
+      try { await postQuizRecordToSheets(item); }
+      catch (_) { remaining.push(item); }
+    }
+    savePendingQueue(remaining);
+    isFlushingQueue = false;
+    if (remaining.length < queue.length) {
+      setTimeout(() => fetchSummaryFromSheets(false), 900);
+    }
+  }
+
+  async function recordQuizCompletion(evalObj, serialCode, answersArr) {
+    if (!evalObj || !evalObj.mainPersona || hasSubmittedCurrentRun) return;
+    hasSubmittedCurrentRun = true;
+
+    const p = evalObj.mainPersona;
+    const nowIso = new Date().toISOString();
+    const answersRaw = ALL_QUESTIONS.map((q, idx) => {
+      const optIdx = answersArr[idx];
+      const opt = (optIdx != null && q.options[optIdx]) ? q.options[optIdx] : null;
+      return `${q.id}:${opt ? opt.letter : '-'}`;
+    }).join(', ');
+
+    const simText = evalObj.similarities.map(s => `${PERSONAS[s.id].shortName.slice(0, 2)}${s.pct}%`).join(' ');
+    const shadowNote = evalObj.showSecond
+      ? `主 ${evalObj.mainPct}% · 含${evalObj.secondPersona.name}(${evalObj.secondPct}%)`
+      : `主 ${evalObj.mainPct}%（吻合${evalObj.mainMatchCount}/10題）`;
+    const pathSummary = `Q11想分享：${evalObj.q11Text || '未填'} ｜ ${simText}`;
+    const docId = `r_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+
+    const payload = {
+      docId,
+      serial: serialCode,
+      personaId: p.id,
+      personaName: p.name,
+      emotionLabel: shadowNote,
+      pathSummary,
+      answersRaw,
+      recordScore: evalObj.mainPct,
+      awarenessScore: evalObj.secondPct,
+      shareScore: evalObj.totalScore,
+      deviceType: getDeviceLabel(),
+      host: String(window.location.hostname || 'local').slice(0, 80),
+      createdAtIso: nowIso,
+      createdAtLocal: formatLocalTime(nowIso)
+    };
+
+    statsState.summary.total += 1;
+    statsState.summary[p.id] = (statsState.summary[p.id] || 0) + 1;
+    saveCachedSummary(statsState.summary);
+    statsState.records = [payload].concat(statsState.records);
+    saveLocalRecords(statsState.records);
+    renderCrowdStatsUI(p.id);
+
+    const endpoint = getSheetsEndpointUrl();
+    statsState.isConfigured = Boolean(endpoint);
+    if (!endpoint) {
+      const q = getPendingQueue();
+      q.push(payload);
+      savePendingQueue(q);
+      renderCrowdStatsUI(p.id);
+      return;
+    }
+
+    try {
+      await postQuizRecordToSheets(payload);
+      statsState.isOnline = true;
+      setTimeout(() => fetchSummaryFromSheets(false), 1100);
+    } catch (_) {
+      statsState.isOnline = false;
+      const q = getPendingQueue();
+      q.push(payload);
+      savePendingQueue(q);
+      renderCrowdStatsUI(p.id);
+    }
+  }
+
+  function renderCrowdStatsUI(highlightPersonaId) {
+    const s = statsState.summary;
+    const total = Math.max(0, s.total || 0);
+
+    const startBadge = document.getElementById('startTotalBadge');
+    const liveTotalEl = document.getElementById('liveStatsTotalCount');
+    const startBarsEl = document.getElementById('liveStatsBars');
+    const dotEl = document.getElementById('liveSyncDot');
+    const noteEl = document.getElementById('liveStatsSourceNote');
+    const pendingCount = getPendingQueue().length;
+    const configured = Boolean(getSheetsEndpointUrl());
+
+    if (startBadge) startBadge.textContent = String(total);
+    if (liveTotalEl) liveTotalEl.textContent = String(total);
+    if (dotEl) dotEl.classList.toggle('offline', !configured || (!statsState.isOnline && !statsState.isSyncing));
+    if (noteEl) {
+      if (!configured) noteEl.textContent = '目前為本機統計模式（填入 Google 試算表網址即可跨裝置同步）';
+      else if (statsState.isOnline) noteEl.textContent = pendingCount > 0 ? `Google 試算表已連線 · ${pendingCount} 筆補傳中` : 'Google 試算表雲端即時統計（0 額度負擔）';
+      else if (statsState.isSyncing) noteEl.textContent = '正在連線 Google 試算表同步統計...';
+      else noteEl.textContent = `暫離線快取顯示（待補同步 ${pendingCount} 筆）`;
+    }
+
+    const sortedIds = PERSONA_ORDER.slice().sort((a, b) => (s[b] || 0) - (s[a] || 0));
+    const buildBarsHtml = (activeId) => sortedIds.map((id) => {
+      const p = PERSONAS[id];
+      const cnt = s[id] || 0;
+      const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+      const isMe = activeId && activeId === id;
+      return `
+        <div class="live-stat-row${isMe ? ' is-user-persona' : ''}">
+          <div class="live-stat-meta">
+            <span class="live-stat-name">
+              <span class="live-stat-dot" style="background:${p.barColor};"></span>
+              <span>${escapeHtml(p.name)}</span>
+              ${isMe ? '<span class="live-stat-you-badge">你</span>' : ''}
+            </span>
+            <span class="live-stat-num">${cnt} 人 (${pct}%)</span>
+          </div>
+          <div class="live-stat-track">
+            <div class="live-stat-fill" style="width:${pct}%;background:${p.barColor};"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (startBarsEl) startBarsEl.innerHTML = buildBarsHtml(null);
+
+    const resultHeadline = document.getElementById('resultCrowdHeadline');
+    const resultBars = document.getElementById('resultCrowdBars');
+    const resultBadge = document.getElementById('resultCrowdSyncBadge');
+    if (highlightPersonaId && PERSONAS[highlightPersonaId]) {
+      const p = PERSONAS[highlightPersonaId];
+      const myCnt = s[highlightPersonaId] || 0;
+      const myPct = total > 0 ? Math.round((myCnt / total) * 100) : 0;
+      if (resultHeadline) resultHeadline.textContent = `全場累積 ${total} 人測驗，其中 ${myCnt} 人（${myPct}%）和你同屬「${p.name}」`;
+      if (resultBars) resultBars.innerHTML = buildBarsHtml(highlightPersonaId);
+      if (resultBadge) {
+        if (!configured) resultBadge.textContent = '已記錄（本機模式）';
+        else resultBadge.textContent = statsState.isOnline ? '已送入 Google 試算表' : '暫存待試算表同步';
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // 12. 後台統計面板、Q11 展板分析與 Excel 匯出
+  // ─────────────────────────────────────────────────────────
+  function computeQ11Distribution(records) {
+    const counts = { A: 0, B: 0, C: 0, D: 0, total: 0 };
+    (records || []).forEach((r) => {
+      const match = String(r.answersRaw || '').match(/\bQ11:([A-D])\b/i);
+      if (match && counts.hasOwnProperty(match[1].toUpperCase())) {
+        counts[match[1].toUpperCase()] += 1;
+        counts.total += 1;
+      }
+    });
+    return counts;
+  }
+
+  function buildGoogleAppsScriptSource() {
+    return [
+      "var DETAILS_SHEET_NAME = '逐筆測驗明細';",
+      "var SUMMARY_SHEET_NAME = '人格統計總覽';",
+      'var PERSONAS_META = [',
+      "  ['lurker', '潛水觀察派', '很少記錄、幾乎不發文，主要看別人的生活'],",
+      "  ['diarist', '備忘錄日記派', '記錄很多，但大多留給自己，偶爾才分享'],",
+      "  ['stealth', '悄悄發佈派', '想分享，但不想太快被注意'],",
+      "  ['curator', '精修完美派', '常發文，在意呈現效果、讚數與反應'],",
+      "  ['freespirit', '隨心所欲派', '常發文，想發就發，不太在意別人怎麼看']",
+      '];',
+      '',
+      'function ensureSheets_(ss) {',
+      '  var detail = ss.getSheetByName(DETAILS_SHEET_NAME);',
+      '  if (!detail) {',
+      '    detail = ss.insertSheet(DETAILS_SHEET_NAME);',
+      "    detail.appendRow(['序號', '完成時間', '流水號', '人格代碼', '社群人格名稱', '相似度與影子摘要', 'Q11與五派別吻合', 'Q1-Q11作答明細', '主相似度%', '次相似度%', '參考總分(10-30)', '裝置類型', '來源網域', '紀錄ID']);",
+      '    detail.setFrozenRows(1);',
+      '  }',
+      '  var summary = ss.getSheetByName(SUMMARY_SHEET_NAME);',
+      '  if (!summary) {',
+      '    summary = ss.insertSheet(SUMMARY_SHEET_NAME, 0);',
+      "    summary.appendRow(['人格代碼', '社群人格名稱', '特徵說明', '累積人數', '佔比']);",
+      '    for (var i = 0; i < PERSONAS_META.length; i++) {',
+      '      var r = i + 2;',
+      '      summary.appendRow([',
+      '        PERSONAS_META[i][0],',
+      '        PERSONAS_META[i][1],',
+      '        PERSONAS_META[i][2],',
+      "        \"=COUNTIF('\" + DETAILS_SHEET_NAME + \"'!D:D, A\" + r + \")\",",
+      "        '=IF($D$7>0, D' + r + '/$D$7, 0)'",
+      '      ]);',
+      '    }',
+      "    summary.appendRow(['TOTAL', '總計累積人數', '全部五大派別', '=SUM(D2:D6)', '=IF(D7>0, 1, 0)']);",
+      "    summary.getRange('E2:E7').setNumberFormat('0.0%');",
+      '    summary.setFrozenRows(1);',
+      '  }',
+      '  return { detail: detail, summary: summary };',
+      '}',
+      '',
+      'function doGet(e) {',
+      '  var ss = SpreadsheetApp.getActiveSpreadsheet();',
+      '  var sheets = ensureSheets_(ss);',
+      '  var counts = { total: 0, lurker: 0, diarist: 0, stealth: 0, curator: 0, freespirit: 0 };',
+      '  var sumVals = sheets.summary.getRange(2, 1, 6, 4).getValues();',
+      '  for (var i = 0; i < sumVals.length; i++) {',
+      "    var code = String(sumVals[i][0] || '');",
+      '    var num = Number(sumVals[i][3]) || 0;',
+      "    if (code === 'TOTAL') counts.total = num;",
+      '    else if (counts.hasOwnProperty(code)) counts[code] = num;',
+      '  }',
+      '  var result = { ok: true, summary: counts, records: [] };',
+      "  var includeRecords = e && e.parameter && e.parameter.includeRecords === '1';",
+      '  if (includeRecords) {',
+      '    var lastRow = sheets.detail.getLastRow();',
+      '    if (lastRow > 1) {',
+      '      var rows = sheets.detail.getRange(2, 1, lastRow - 1, 14).getValues();',
+      '      for (var r = rows.length - 1; r >= 0; r--) {',
+      '        var row = rows[r];',
+      '        var rawTime = row[1];',
+      "        var timeStr = (rawTime instanceof Date) ? Utilities.formatDate(rawTime, ss.getSpreadsheetTimeZone(), 'yyyy/MM/dd HH:mm:ss') : String(rawTime || '');",
+      '        result.records.push({',
+      '          createdAtLocal: timeStr,',
+      "          serial: String(row[2] || ''),",
+      "          personaId: String(row[3] || ''),",
+      "          personaName: String(row[4] || ''),",
+      "          emotionLabel: String(row[5] || ''),",
+      "          pathSummary: String(row[6] || ''),",
+      "          answersRaw: String(row[7] || ''),",
+      '          recordScore: Number(row[8]) || 0,',
+      '          awarenessScore: Number(row[9]) || 0,',
+      '          shareScore: Number(row[10]) || 0,',
+      "          deviceType: String(row[11] || ''),",
+      "          host: String(row[12] || ''),",
+      "          docId: String(row[13] || '')",
+      '        });',
+      '      }',
+      '    }',
+      '  }',
+      '  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);',
+      '}',
+      '',
+      'function doPost(e) {',
+      '  var lock = LockService.getScriptLock();',
+      '  lock.waitLock(10000);',
+      '  try {',
+      "    var data = JSON.parse((e && e.postData && e.postData.contents) ? e.postData.contents : '{}');",
+      '    if (!data.personaId) {',
+      "      return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'missing_persona' })).setMimeType(ContentService.MimeType.JSON);",
+      '    }',
+      '    var ss = SpreadsheetApp.getActiveSpreadsheet();',
+      '    var sheets = ensureSheets_(ss);',
+      '    var detail = sheets.detail;',
+      '    var lastRow = detail.getLastRow();',
+      '    if (data.docId && lastRow > 1) {',
+      '      var checkCount = Math.min(50, lastRow - 1);',
+      '      var recentIds = detail.getRange(lastRow - checkCount + 1, 14, checkCount, 1).getValues();',
+      '      for (var i = 0; i < recentIds.length; i++) {',
+      '        if (String(recentIds[i][0]) === String(data.docId)) {',
+      '          return ContentService.createTextOutput(JSON.stringify({ ok: true, duplicate: true })).setMimeType(ContentService.MimeType.JSON);',
+      '        }',
+      '      }',
+      '    }',
+      '    var seq = Math.max(1, lastRow);',
+      '    detail.appendRow([',
+      '      seq,',
+      "      data.createdAtLocal || '',",
+      "      data.serial || '',",
+      "      data.personaId || '',",
+      "      data.personaName || '',",
+      "      data.emotionLabel || '',",
+      "      data.pathSummary || '',",
+      "      data.answersRaw || '',",
+      '      Number(data.recordScore) || 0,',
+      '      Number(data.awarenessScore) || 0,',
+      '      Number(data.shareScore) || 0,',
+      "      data.deviceType || '',",
+      "      data.host || '',",
+      "      data.docId || ''",
+      '    ]);',
+      '    return ContentService.createTextOutput(JSON.stringify({ ok: true, seq: seq })).setMimeType(ContentService.MimeType.JSON);',
+      '  } finally {',
+      '    lock.releaseLock();',
+      '  }',
+      '}'
+    ].join('\n');
+  }
+
+  function bindAdminEvents() {
+    const btnRefresh = document.getElementById('btnRefreshAdmin');
+    if (btnRefresh) btnRefresh.addEventListener('click', () => { playSound('tap'); refreshAdminData(); });
+
+    const btnExportXls = document.getElementById('btnExportXls');
+    if (btnExportXls) btnExportXls.addEventListener('click', () => exportExcelWorkbook());
+
+    const btnExportCsv = document.getElementById('btnExportCsv');
+    if (btnExportCsv) btnExportCsv.addEventListener('click', () => exportCsvData());
+
+    const btnReset = document.getElementById('btnResetTestStats');
+    if (btnReset) btnReset.addEventListener('click', () => clearLocalCachedStats());
+
+    const webhookInput = document.getElementById('sheetsWebhookInput');
+    if (webhookInput) {
+      try {
+        webhookInput.value = localStorage.getItem(WEBHOOK_STORAGE_KEY) || GOOGLE_SHEETS_API_URL || '';
+      } catch (_) {}
+    }
+
+    const btnSaveWebhook = document.getElementById('btnSaveWebhook');
+    if (btnSaveWebhook) {
+      btnSaveWebhook.addEventListener('click', () => {
+        const val = webhookInput ? webhookInput.value.trim() : '';
+        if (val && !/^https:\/\/script\.google\.com\//i.test(val)) {
+          showToast('⚠️ 請填入有效的 Google Apps Script https:// 網址');
+          return;
+        }
+        try {
+          if (val) localStorage.setItem(WEBHOOK_STORAGE_KEY, val);
+          else localStorage.removeItem(WEBHOOK_STORAGE_KEY);
+          statsState.isConfigured = Boolean(getSheetsEndpointUrl());
+          showToast(val ? '✅ 已儲存試算表網址，正在連線...' : '已還原為預設試算表網址');
+          refreshAdminData();
+        } catch (_) {}
+      });
+    }
+
+    const btnCopyScript = document.getElementById('btnCopyAppsScript');
+    if (btnCopyScript) {
+      btnCopyScript.addEventListener('click', () => {
+        const scriptCode = buildGoogleAppsScriptSource();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(scriptCode).then(() => showToast('📋 Google 試算表完整腳本已複製！')).catch(() => fallbackCopy(scriptCode));
+        } else {
+          fallbackCopy(scriptCode);
+        }
+      });
+    }
+
+    const btnTestWebhook = document.getElementById('btnTestWebhook');
+    if (btnTestWebhook) {
+      btnTestWebhook.addEventListener('click', async () => {
+        const endpoint = getSheetsEndpointUrl();
+        if (!endpoint) {
+          showToast('⚠️ 請先貼入並儲存 Google 試算表網址');
+          return;
+        }
+        const testRow = {
+          docId: `test_${Date.now().toString(36)}`,
+          serial: 'TEST-0000',
+          personaId: 'stealth',
+          personaName: '悄悄發佈派 (測試寫入)',
+          emotionLabel: '主 80% · 含精修完美派(70%)',
+          pathSummary: 'Q11想分享：一處讓我停下腳步的風景 ｜ 潛水10% 備忘40% 悄悄80% 精修70% 隨心30%',
+          answersRaw: 'Q1:A, Q2:C, Q3:B, Q4:C, Q5:B, Q6:B, Q7:C, Q8:C, Q9:C, Q10:C, Q11:A',
+          recordScore: 80,
+          awarenessScore: 70,
+          shareScore: 22,
+          deviceType: getDeviceLabel(),
+          host: String(window.location.hostname || 'local'),
+          createdAtLocal: formatLocalTime()
+        };
+        try {
+          await postQuizRecordToSheets(testRow);
+          showToast('🚀 已送出測試列，請確認試算表（測試完記得到試算表刪掉該列）');
+          setTimeout(() => refreshAdminData(), 1100);
+        } catch (_) {
+          showToast('❌ 測試送出失敗，請檢查部署權限是否為「所有人」');
+        }
+      });
+    }
+  }
+
+  function openAdminModal() {
+    if (!adminModal) return;
+    if (!adminModal.open) adminModal.showModal();
+    const box = adminModal.querySelector('.standee-modal-box');
+    if (box) box.scrollTop = 0;
+    const configBox = document.getElementById('adminSheetsConfigBox');
+    if (configBox && !getSheetsEndpointUrl()) configBox.open = true;
+    renderAdminKpisAndSummary();
+    renderAdminRecordsTable();
+    refreshAdminData();
+  }
+
+  function closeAdminModal() {
+    if (adminModal && adminModal.open) adminModal.close();
+  }
+
+  async function refreshAdminData() {
+    await flushPendingSubmissions();
+    await fetchSummaryFromSheets(true);
+    renderAdminKpisAndSummary();
+    renderAdminRecordsTable();
+  }
+
+  function renderAdminKpisAndSummary() {
+    const s = statsState.summary;
+    const total = s.total || 0;
+    const pending = getPendingQueue().length;
+    const configured = Boolean(getSheetsEndpointUrl());
+
+    const kpiTotal = document.getElementById('adminKpiTotal');
+    const kpiTop = document.getElementById('adminKpiTop');
+    const kpiRows = document.getElementById('adminKpiRows');
+    const kpiPending = document.getElementById('adminKpiPending');
+    const statusBadge = document.getElementById('adminSyncStatus');
+
+    if (kpiTotal) kpiTotal.textContent = String(total);
+    if (kpiRows) kpiRows.textContent = String(statsState.records.length);
+    if (kpiPending) kpiPending.textContent = String(pending);
+
+    let topId = '';
+    let topCount = -1;
+    PERSONA_ORDER.forEach((id) => {
+      if ((s[id] || 0) > topCount) { topCount = s[id] || 0; topId = id; }
+    });
+    if (kpiTop) {
+      kpiTop.textContent = total > 0 && PERSONAS[topId] ? `${PERSONAS[topId].name} (${topCount})` : '尚無紀錄';
+    }
+
+    if (statusBadge) {
+      if (!configured) statusBadge.innerHTML = '<span class="live-dot-pulse offline" aria-hidden="true"></span> 待綁定 Google 試算表';
+      else if (statsState.isOnline) statusBadge.innerHTML = '<span class="live-dot-pulse" aria-hidden="true"></span> Google 試算表已連線';
+      else statusBadge.innerHTML = '<span class="live-dot-pulse offline" aria-hidden="true"></span> 連線異常 (暫存本機)';
+    }
+
+    const sumBody = document.getElementById('adminSummaryBody');
+    if (sumBody) {
+      sumBody.innerHTML = PERSONA_ORDER.map((id) => {
+        const p = PERSONAS[id];
+        const cnt = s[id] || 0;
+        const pct = total > 0 ? ((cnt / total) * 100).toFixed(1) : '0.0';
+        return `
+          <tr>
+            <td><strong><span class="live-stat-dot" style="background:${p.barColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(p.name)}</strong></td>
+            <td>${escapeHtml(p.traitSummary)}</td>
+            <td><strong>${cnt}</strong></td>
+            <td>${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    const q11Body = document.getElementById('adminQ11Body');
+    if (q11Body) {
+      const q11Dist = computeQ11Distribution(statsState.records);
+      q11Body.innerHTML = FINAL_QUESTION.options.map((opt) => {
+        const cnt = q11Dist[opt.letter] || 0;
+        const pct = q11Dist.total > 0 ? ((cnt / q11Dist.total) * 100).toFixed(1) : '0.0';
+        return `
+          <tr>
+            <td><strong>${escapeHtml(opt.letter)}</strong></td>
+            <td>${escapeHtml(opt.text)}</td>
+            <td><strong>${cnt}</strong></td>
+            <td>${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  function renderAdminRecordsTable() {
+    const tbody = document.getElementById('adminRecordsBody');
+    if (!tbody) return;
+    if (statsState.records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#786E60;padding:24px;">尚未有作答紀錄（完成一次測驗即會寫入）。</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = statsState.records.slice(0, 100).map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(r.createdAtLocal || r.createdAtIso)}</td>
+        <td><code>${escapeHtml(r.serial || '—')}</code></td>
+        <td><strong>${escapeHtml(r.personaName || r.personaId)}</strong><br><small style="color:#786E60;">${escapeHtml(r.emotionLabel || '')}</small></td>
+        <td class="wrap-cell">${escapeHtml(r.pathSummary || '—')}</td>
+        <td>${escapeHtml(r.deviceType || '—')}</td>
+      </tr>
+    `).join('');
+  }
+
+  function clearLocalCachedStats() {
+    savePendingQueue([]);
+    statsState.records = [];
+    statsState.summary = { total: 0, lurker: 0, diarist: 0, stealth: 0, curator: 0, freespirit: 0 };
+    saveCachedSummary(statsState.summary);
+    saveLocalRecords([]);
+    renderCrowdStatsUI(currentEvaluation ? currentEvaluation.mainPersonaId : null);
+    renderAdminKpisAndSummary();
+    renderAdminRecordsTable();
+    showToast('🧹 已清除本機暫存（雲端 Google 試算表需至試算表內手動刪列）');
+    if (getSheetsEndpointUrl()) fetchSummaryFromSheets(true);
+  }
+
+  function formatFileTimestamp() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escapeXml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function safeSpreadsheetString(val) {
+    const s = String(val == null ? '' : val);
+    return /^[=+\-@]/.test(s) ? `'${s}` : s;
+  }
+
+  async function exportExcelWorkbook() {
+    playSound('tap');
+    showToast('📊 正在抓取最新紀錄並產生 Excel 活頁簿...');
+    await refreshAdminData();
+
+    const s = statsState.summary;
+    const records = statsState.records;
+    const q11Dist = computeQ11Distribution(records);
+
+    const xmlCell = (val, type = 'String', styleId = '') => {
+      const styleAttr = styleId ? ` ss:StyleID="${styleId}"` : '';
+      if (type === 'Number') {
+        return `<Cell${styleAttr}><Data ss:Type="Number">${Number(val) || 0}</Data></Cell>`;
+      }
+      return `<Cell${styleAttr}><Data ss:Type="String">${escapeXml(safeSpreadsheetString(val))}</Data></Cell>`;
+    };
+
+    const summaryHeaderRow = ['派別代碼', '派別名稱', '典型特徵', '累積人數', '佔比']
+      .map(h => xmlCell(h, 'String', 'Header')).join('');
+
+    const summaryRows = PERSONA_ORDER.map((id) => {
+      const p = PERSONAS[id];
+      const cnt = s[id] || 0;
+      const pctRatio = s.total > 0 ? (cnt / s.total) : 0;
+      return `<Row>${[
+        xmlCell(id),
+        xmlCell(p.name),
+        xmlCell(p.traitSummary),
+        xmlCell(cnt, 'Number'),
+        `<Cell ss:StyleID="Percent" ss:Formula="=IF(R7C4&gt;0,RC[-1]/R7C4,0)"><Data ss:Type="Number">${pctRatio.toFixed(4)}</Data></Cell>`
+      ].join('')}</Row>`;
+    }).join('');
+
+    const summaryTotalRow = `<Row>${[
+      xmlCell('TOTAL', 'String', 'Total'),
+      xmlCell('總計累積人數', 'String', 'Total'),
+      xmlCell('全部五大派別', 'String', 'Total'),
+      `<Cell ss:StyleID="Total" ss:Formula="=SUM(R[-5]C:R[-1]C)"><Data ss:Type="Number">${s.total || 0}</Data></Cell>`,
+      `<Cell ss:StyleID="TotalPercent" ss:Formula="=IF(R7C4&gt;0,1,0)"><Data ss:Type="Number">${s.total > 0 ? 1 : 0}</Data></Cell>`
+    ].join('')}</Row>`;
+
+    // Sheet 2: Q11 展板心聲統計
+    const q11HeaderRow = ['選項代碼', 'Q11 最想分享的心聲內容', '選擇人數', '佔比']
+      .map(h => xmlCell(h, 'String', 'Header')).join('');
+
+    const q11Rows = FINAL_QUESTION.options.map((opt) => {
+      const cnt = q11Dist[opt.letter] || 0;
+      const pctRatio = q11Dist.total > 0 ? (cnt / q11Dist.total) : 0;
+      return `<Row>${[
+        xmlCell(opt.letter),
+        xmlCell(opt.text),
+        xmlCell(cnt, 'Number'),
+        `<Cell ss:StyleID="Percent" ss:Formula="=IF(R6C3&gt;0,RC[-1]/R6C3,0)"><Data ss:Type="Number">${pctRatio.toFixed(4)}</Data></Cell>`
+      ].join('')}</Row>`;
+    }).join('');
+
+    const q11TotalRow = `<Row>${[
+      xmlCell('TOTAL', 'String', 'Total'),
+      xmlCell('Q11 有效作答總數', 'String', 'Total'),
+      `<Cell ss:StyleID="Total" ss:Formula="=SUM(R[-4]C:R[-1]C)"><Data ss:Type="Number">${q11Dist.total || 0}</Data></Cell>`,
+      `<Cell ss:StyleID="TotalPercent" ss:Formula="=IF(R6C3&gt;0,1,0)"><Data ss:Type="Number">${q11Dist.total > 0 ? 1 : 0}</Data></Cell>`
+    ].join('')}</Row>`;
+
+    // Sheet 3: 逐筆明細
+    const detailHeaders = ['序號', '完成時間', '檔案編號', '派別代碼', '社群派別名稱', '相似度與影子摘要', 'Q11與五派別吻合', 'Q1-Q11作答明細', '主相似度%', '次相似度%', '參考總分(10-30)', '裝置類型', '來源網域'];
+    const detailHeaderRow = `<Row>${detailHeaders.map(h => xmlCell(h, 'String', 'Header')).join('')}</Row>`;
+    const detailRows = records.map((r, idx) => `<Row>${[
+      xmlCell(idx + 1, 'Number'),
+      xmlCell(r.createdAtLocal || r.createdAtIso),
+      xmlCell(r.serial),
+      xmlCell(r.personaId),
+      xmlCell(r.personaName),
+      xmlCell(r.emotionLabel),
+      xmlCell(r.pathSummary),
+      xmlCell(r.answersRaw),
+      xmlCell(r.recordScore, 'Number'),
+      xmlCell(r.awarenessScore, 'Number'),
+      xmlCell(r.shareScore, 'Number'),
+      xmlCell(r.deviceType),
+      xmlCell(r.host)
+    ].join('')}</Row>`).join('');
+
+    const workbookXml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<?mso-application progid="Excel.Sheet"?>',
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">',
+      ' <Styles>',
+      '  <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Microsoft JhengHei" ss:Size="11"/></Style>',
+      '  <Style ss:ID="Header"><Font ss:FontName="Microsoft JhengHei" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E1B16" ss:Pattern="Solid"/></Style>',
+      '  <Style ss:ID="Percent"><NumberFormat ss:Format="0.0%"/></Style>',
+      '  <Style ss:ID="Total"><Font ss:FontName="Microsoft JhengHei" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#EFE6D4" ss:Pattern="Solid"/></Style>',
+      '  <Style ss:ID="TotalPercent"><Font ss:FontName="Microsoft JhengHei" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#EFE6D4" ss:Pattern="Solid"/><NumberFormat ss:Format="0.0%"/></Style>',
+      ' </Styles>',
+      ' <Worksheet ss:Name="五大派別統計總覽">',
+      '  <Table>',
+      '   <Column ss:Width="95"/><Column ss:Width="135"/><Column ss:Width="260"/><Column ss:Width="95"/><Column ss:Width="95"/>',
+      `   <Row>${summaryHeaderRow}</Row>`,
+      summaryRows,
+      summaryTotalRow,
+      '  </Table>',
+      ' </Worksheet>',
+      ' <Worksheet ss:Name="Q11展板心聲統計">',
+      '  <Table>',
+      '   <Column ss:Width="80"/><Column ss:Width="290"/><Column ss:Width="95"/><Column ss:Width="95"/>',
+      `   <Row>${q11HeaderRow}</Row>`,
+      q11Rows,
+      q11TotalRow,
+      '  </Table>',
+      ' </Worksheet>',
+      ' <Worksheet ss:Name="逐筆測驗明細">',
+      '  <Table>',
+      '   <Column ss:Width="55"/><Column ss:Width="150"/><Column ss:Width="130"/><Column ss:Width="95"/><Column ss:Width="125"/><Column ss:Width="210"/><Column ss:Width="340"/><Column ss:Width="240"/><Column ss:Width="85"/><Column ss:Width="85"/><Column ss:Width="100"/><Column ss:Width="75"/><Column ss:Width="150"/>',
+      detailHeaderRow,
+      detailRows,
+      '  </Table>',
+      ' </Worksheet>',
+      '</Workbook>'
+    ].join('\n');
+
+    const blob = new Blob([workbookXml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MapMo-社群派別統計與明細-${formatFileTimestamp()}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`📥 已匯出 Excel 活頁簿（含 3 個工作表，共 ${records.length} 筆明細）！`);
+  }
+
+  async function exportCsvData() {
+    playSound('tap');
+    showToast('📄 正在抓取最新紀錄並產生 CSV...');
+    await refreshAdminData();
+
+    const csvCell = (val) => `"${safeSpreadsheetString(val).replace(/"/g, '""')}"`;
+    const headers = ['序號', '完成時間', '檔案編號', '派別代碼', '社群派別名稱', '相似度與影子摘要', 'Q11與五派別吻合', 'Q1-Q11作答明細', '主相似度%', '次相似度%', '參考總分(10-30)', '裝置類型', '來源網域'];
+    const lines = [headers.map(csvCell).join(',')];
+
+    statsState.records.forEach((r, idx) => {
+      lines.push([
+        idx + 1,
+        r.createdAtLocal || r.createdAtIso,
+        r.serial,
+        r.personaId,
+        r.personaName,
+        r.emotionLabel,
+        r.pathSummary,
+        r.answersRaw,
+        r.recordScore,
+        r.awarenessScore,
+        r.shareScore,
+        r.deviceType,
+        r.host
+      ].map(csvCell).join(','));
+    });
+
+    const csvContent = '\uFEFF' + lines.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MapMo-社群派別逐筆明細-${formatFileTimestamp()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`📥 已匯出 CSV（共 ${statsState.records.length} 筆）！`);
+  }
+
+  // Export testable pure evaluator hook onto window.__MAPMO_QUIZ_TEST__ strictly read-only if needed
+  window.__MAPMO_QUIZ_ENGINE__ = {
+    SCORED_QUESTIONS,
+    FINAL_QUESTION,
+    PERSONA_ORDER,
+    evaluateQuizResult
+  };
 
 })();
