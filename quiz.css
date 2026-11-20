@@ -199,9 +199,15 @@ body.quiz-page {
   white-space: nowrap;
 }
 
-.pill-action-btn:hover {
-  transform: translate(-1px, -1px);
-  background: #FFF7D6;
+@media (hover: hover) and (pointer: fine) {
+  .pill-action-btn:hover {
+    transform: translate(-1px, -1px);
+    background: #FFF7D6;
+  }
+}
+
+.pill-action-btn:active {
+  transform: scale(0.97);
 }
 
 .pill-action-btn.active {
@@ -506,10 +512,12 @@ body.quiz-page {
   transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
-.start-btn-sketch:hover {
-  background: var(--terracotta-deep);
-  transform: translate(-1px, -2px);
-  box-shadow: 5px 7px 0 var(--ink-black);
+@media (hover: hover) and (pointer: fine) {
+  .start-btn-sketch:hover {
+    background: var(--terracotta-deep);
+    transform: translate(-1px, -2px);
+    box-shadow: 5px 7px 0 var(--ink-black);
+  }
 }
 
 .start-btn-sketch:active {
@@ -583,8 +591,46 @@ body.quiz-page {
   color: #FFFDF8;
 }
 
-.sketch-chip-btn:hover {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .sketch-chip-btn:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.sketch-chip-btn:active {
+  transform: scale(0.97);
+}
+
+/* Exhibitor / Staff Drawer at Bottom of Home */
+.exhibitor-tools-drawer {
+  width: 100%;
+  max-width: 660px;
+  background: rgba(255, 253, 248, 0.72);
+  border: 1.5px dashed rgba(30, 27, 22, 0.28);
+  border-radius: 14px;
+  padding: 10px 16px;
+}
+
+.exhibitor-tools-drawer summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  list-style: none;
+}
+
+.exhibitor-tools-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.exhibitor-tools-body {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(30, 27, 22, 0.16);
 }
 
 .start-exhibition-hint {
@@ -707,11 +753,19 @@ body.quiz-page {
   transition: border-color 0.16s ease, background 0.16s ease, transform 0.14s ease, box-shadow 0.16s ease;
 }
 
-.quiz-option-btn:hover {
+@media (hover: hover) and (pointer: fine) {
+  .quiz-option-btn:hover {
+    border-color: var(--terracotta);
+    background: #FFF8F4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(217, 104, 70, 0.12);
+  }
+}
+
+.quiz-option-btn:active {
   border-color: var(--terracotta);
-  background: #FFF8F4;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(217, 104, 70, 0.12);
+  background: #FFF4EE;
+  transform: scale(0.988);
 }
 
 .quiz-option-btn.selected-prev {
@@ -767,8 +821,10 @@ body.quiz-page {
   transition: color 0.15s ease;
 }
 
-.quiz-back-btn:hover {
-  color: var(--ink-black);
+@media (hover: hover) and (pointer: fine) {
+  .quiz-back-btn:hover {
+    color: var(--ink-black);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1087,6 +1143,33 @@ body.quiz-page {
   box-shadow: 3px 3px 0 rgba(30, 27, 22, 0.85);
 }
 
+.poster-thumb-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.poster-zoom-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  background: rgba(30, 27, 22, 0.84);
+  color: #FFFDF8;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
 .poster-thumb-img {
   width: 100%;
   height: auto;
@@ -1339,9 +1422,41 @@ body.quiz-page {
   color: var(--ink-black);
 }
 
-.btn-result-action:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 5px 0 var(--ink-black);
+.full-width-action {
+  width: 100%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-result-action:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 5px 0 var(--ink-black);
+  }
+}
+
+.btn-result-action:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--ink-black);
+}
+
+.result-staff-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.result-staff-qr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--ink-brown);
+  font-family: var(--font-tw);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px 12px;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1579,27 +1694,55 @@ dialog.native-modal-dialog::backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
   box-shadow: var(--sketch-shadow), 0 28px 60px rgba(0, 0, 0, 0.35);
-  padding: 28px;
+  padding: 0 28px 28px;
   position: relative;
 }
 
 .tree-qr-studio-box {
   background: #F6F2EA !important;
   max-width: 600px !important;
-  padding: 28px 26px 24px !important;
+  padding: 0 26px 24px !important;
+}
+
+.modal-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #FAF8F3;
+  padding: 16px 0 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(30, 27, 22, 0.08);
+}
+
+.tree-qr-sticky-bar {
+  background: #F6F2EA;
+}
+
+.modal-sticky-label {
+  margin: 0;
+  font-family: var(--font-en), var(--font-tw);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: var(--ink-brown);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .standee-modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 30;
-  width: 38px;
-  height: 38px;
+  position: static;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(30, 27, 22, 0.08);
   border: 1.5px solid rgba(30, 27, 22, 0.16);
-  font-size: 16px;
+  font-size: 17px;
   color: var(--ink-black);
   cursor: pointer;
   display: flex;
@@ -1608,9 +1751,16 @@ dialog.native-modal-dialog::backdrop {
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.standee-modal-close:hover {
-  background: rgba(30, 27, 22, 0.16);
-  transform: rotate(90deg);
+@media (hover: hover) and (pointer: fine) {
+  .standee-modal-close:hover {
+    background: rgba(30, 27, 22, 0.16);
+    transform: rotate(90deg);
+  }
+}
+
+.standee-modal-close:active {
+  background: rgba(30, 27, 22, 0.2);
+  transform: scale(0.94);
 }
 
 /* QR Mode Tabs */
@@ -1621,7 +1771,7 @@ dialog.native-modal-dialog::backdrop {
   padding: 4px;
   background: rgba(30, 27, 22, 0.07);
   border-radius: 99px;
-  margin: 0 42px 16px;
+  margin: 0 0 16px;
 }
 
 .qr-studio-tab {
@@ -1804,12 +1954,65 @@ dialog.native-modal-dialog::backdrop {
 }
 
 .tree-color-dot {
-  width: 24px;
-  height: 24px;
+  position: relative;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 2.5px solid transparent;
   cursor: pointer;
   padding: 0;
+}
+
+/* Lightbox / Mobile Image Share Dialog */
+dialog.native-modal-dialog.media-preview-dialog {
+  max-width: min(94vw, 540px);
+}
+
+.media-preview-box {
+  text-align: center;
+}
+
+.media-preview-stage {
+  background: #EFE6D4;
+  border: 1.5px solid rgba(30, 27, 22, 0.18);
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-preview-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 58dvh;
+  height: auto;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.media-preview-tip {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-brown);
+}
+
+.media-preview-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.media-preview-actions a {
+  text-decoration: none;
+}
+
+.media-preview-actions [hidden] {
+  display: none !important;
 }
 
 .tree-color-dot.active {
@@ -2222,6 +2425,26 @@ dialog.native-modal-dialog::backdrop {
   opacity: 1;
 }
 
+/* Typographic Hierarchy Balance & Pretty Wrapping */
+.journal-display-title,
+.torn-card-title,
+.question-prompt-text,
+.result-persona-name,
+.poster-card-heading,
+.admin-title {
+  text-wrap: balance;
+}
+
+.torn-card-sub,
+.quote-banner-text,
+.quiz-option-text,
+.result-description-text,
+.poster-card-desc,
+.feature-desc,
+.media-preview-tip {
+  text-wrap: pretty;
+}
+
 /* ─────────────────────────────────────────────────────────
    7. Responsive Breakpoints & Touch Targets
    ───────────────────────────────────────────────────────── */
@@ -2229,7 +2452,12 @@ dialog.native-modal-dialog::backdrop {
   .pill-action-btn,
   .sketch-chip-btn,
   .quiz-option-btn,
+  .quiz-back-btn,
+  .btn-download-poster-only,
   .btn-result-action,
+  .result-staff-qr-link,
+  .exhibitor-tools-drawer summary,
+  .standee-modal-close,
   .tree-qr-toggle-pill,
   .tree-season-btn,
   .tree-sound-btn,
@@ -2240,9 +2468,22 @@ dialog.native-modal-dialog::backdrop {
   .live-stats-admin-link {
     min-block-size: 44px;
   }
+  .pill-action-btn,
+  .standee-modal-close,
   .tree-sound-btn {
     min-inline-size: 44px;
+  }
+  .tree-sound-btn {
     height: 44px;
+  }
+  .tree-color-dot {
+    width: 30px;
+    height: 30px;
+  }
+  .tree-color-dot::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
   }
 }
 
@@ -2259,7 +2500,9 @@ dialog.native-modal-dialog::backdrop {
 }
 
 @media (max-width: 639px) {
-  .quiz-nav-badge {
+  /* 頂部手機極簡化：隱藏一般訪客不需要的「後台」按鈕，專注體驗 */
+  .quiz-nav-badge,
+  .nav-admin-btn {
     display: none;
   }
 
@@ -2272,7 +2515,7 @@ dialog.native-modal-dialog::backdrop {
   }
 
   .quiz-nav-standalone {
-    padding: 8px 12px;
+    padding: 7px 12px;
   }
 
   .logo-avatar {
@@ -2285,61 +2528,292 @@ dialog.native-modal-dialog::backdrop {
   }
 
   .pill-action-btn {
-    padding: 6px 11px;
-    font-size: 12.5px;
+    padding: 6px 12px;
+    font-size: 13px;
+    justify-content: center;
   }
 
+  .quiz-main-wrapper {
+    padding: 10px 14px 44px;
+  }
+
+  /* Start Screen — 確保「開始探索」大按鈕在 375x667 / 390x844 首屏無捲動直接看見 */
+  .journal-hero-stage {
+    gap: 11px;
+  }
+
+  .journal-issue-ribbon {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .ribbon-tag {
+    font-size: 10.5px;
+    padding: 3px 9px;
+  }
+
+  .ribbon-date {
+    font-size: 11px;
+    padding: 2px 9px;
+  }
+
+  .journal-kicker-note {
+    font-size: 0.88rem;
+    margin-bottom: 2px;
+  }
+
+  .journal-display-title .title-line-top {
+    font-size: clamp(1.85rem, 6.2vw, 2.3rem);
+  }
+
+  .journal-display-title .title-line-bottom {
+    font-size: clamp(2.15rem, 7.2vw, 2.7rem);
+  }
+
+  .journal-diorama-frame {
+    margin: 2px auto 0;
+  }
+
+  .journal-diorama-img {
+    height: clamp(138px, 22dvh, 196px);
+    aspect-ratio: auto;
+    object-position: center 46%;
+  }
+
+  .tape-strip {
+    width: 64px;
+    height: 16px;
+    top: -8px;
+  }
+
+  .journal-stamp-badge,
+  .adventure-route-strip,
   .doodle-magnifier,
   .doodle-compass {
     display: none;
   }
 
   .torn-paper-card {
-    padding: 20px 16px;
+    padding: 16px 15px 15px;
   }
 
+  .torn-card-inner {
+    gap: 12px;
+  }
+
+  .torn-card-title {
+    font-size: 1.15rem;
+    margin-bottom: 4px;
+  }
+
+  .torn-card-sub {
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .torn-card-sub br {
+    display: none;
+  }
+
+  .start-btn-sketch {
+    width: 100%;
+    padding: 13px 20px;
+    font-size: 15.5px;
+    min-block-size: 50px;
+  }
+
+  /* 5 大派系預覽改為手機橫向可滑動角色卡（拒絕 60px 迷你方塊） */
   .cast-preview-strip {
-    gap: 5px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    gap: 8px;
+    padding: 2px 2px 4px;
+  }
+
+  .cast-preview-strip::-webkit-scrollbar {
+    display: none;
   }
 
   .cast-avatar-pill {
-    padding: 5px 2px 6px;
+    flex: 0 0 92px;
+    scroll-snap-align: start;
+    padding: 8px 5px;
+  }
+
+  .cast-avatar-pill img {
+    max-width: 68px;
   }
 
   .cast-avatar-pill span {
-    font-size: 10px;
+    font-size: 11.5px;
+  }
+
+  .start-exhibition-hint {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .live-stats-card,
+  .result-crowd-card {
+    padding: 16px 15px;
+  }
+
+  /* Question Screen — iPhone SE 667px 下即使 Q11 四選項＋上一題按鈕也可完整一屏顯示 */
+  .quiz-step-card {
+    margin-top: 2px;
+    padding: 16px 15px 14px;
+  }
+
+  .quiz-progress-bar-wrap {
+    margin-bottom: 10px;
+  }
+
+  .quiz-nav-top-row {
+    margin-bottom: 10px;
+  }
+
+  .quiz-section-quote-banner {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+
+  .quote-banner-section {
+    font-size: 11.5px;
+    margin-bottom: 2px;
+  }
+
+  .quote-banner-text {
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  .question-prompt-text {
+    font-size: clamp(1.12rem, 4.4vw, 1.3rem);
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  .quiz-options-container {
+    gap: 9px;
+  }
+
+  .quiz-option-btn {
+    padding: 12px 14px;
+    min-height: 48px;
+  }
+
+  .quiz-option-text {
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  .quiz-bottom-nav-row {
+    margin-top: 12px;
+  }
+
+  .quiz-back-btn {
+    padding: 8px 10px 8px 4px;
+  }
+
+  /* Result Screen — 更緊湊聚焦，特刊可放大、圖卡分享優先 */
+  .result-zine-card {
+    padding: 18px 15px;
+    gap: 16px;
   }
 
   .result-hero-grid {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 10px;
   }
 
-  .result-poster-showcase {
-    grid-template-columns: 1fr;
-    text-align: center;
+  .result-char-stage {
+    padding: 2px;
   }
 
-  .poster-thumb-wrap {
-    max-width: 150px;
+  .result-char-img {
+    max-width: 175px;
     margin: 0 auto;
+  }
+
+  .result-description-box {
+    padding: 13px 14px;
+  }
+
+  .result-description-text {
+    font-size: 14.5px;
+    line-height: 1.62;
+  }
+
+  .spectrum-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
   }
 
   .spectrum-bars-list {
     gap: 6px;
   }
 
+  .spectrum-col-track {
+    height: 92px;
+  }
+
   .spectrum-col-label {
     font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .result-poster-showcase {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .poster-thumb-wrap {
+    max-width: 176px;
+    margin: 0 auto;
+  }
+
+  .btn-download-poster-only {
+    justify-content: center;
+    width: 100%;
+    padding: 10px 14px;
+  }
+
+  .mapmo-bridge-card {
+    padding: 14px 13px;
+    gap: 11px;
+  }
+
+  .feature-match-card {
+    padding: 10px 12px;
   }
 
   .action-row-buttons {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
+  .btn-result-action {
+    padding: 12px 12px;
+    font-size: 14px;
+  }
+
+  /* Modals — Sticky Close + 響應式無溢位資料卡 */
   .standee-modal-box,
   .tree-qr-studio-box {
-    padding: 52px 16px 20px !important;
+    padding: 0 16px 20px !important;
+  }
+
+  .modal-sticky-header {
+    padding: 12px 0 8px;
+    margin-bottom: 10px;
   }
 
   .qr-studio-tabs {
@@ -2351,12 +2825,88 @@ dialog.native-modal-dialog::backdrop {
     padding: 8px;
   }
 
+  .tree-qr-url-input {
+    font-size: 12.5px;
+    padding: 0 10px;
+  }
+
   .bw-qr-actions-grid {
     grid-template-columns: 1fr;
   }
 
+  .admin-header-row {
+    padding-right: 0;
+  }
+
   .admin-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-table-wrap {
+    overflow-x: visible;
+  }
+
+  .admin-table-wrap.tall {
+    max-height: 360px;
+  }
+
+  .admin-responsive-table {
+    min-width: 0;
+  }
+
+  .admin-responsive-table,
+  .admin-responsive-table thead,
+  .admin-responsive-table tbody,
+  .admin-responsive-table tr,
+  .admin-responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-responsive-table thead {
+    display: none;
+  }
+
+  .admin-responsive-table tr {
+    padding: 10px 12px;
+    border-bottom: 2px solid #EFE6D4;
+  }
+
+  .admin-responsive-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .admin-responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 4px 0;
+    border: none;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .admin-responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 800;
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .admin-responsive-table td[colspan] {
+    display: block;
+    text-align: center;
+  }
+
+  .admin-responsive-table td[colspan]::before {
+    content: none;
+  }
+
+  .admin-responsive-table td.wrap-cell {
+    min-width: 0;
   }
 }
 

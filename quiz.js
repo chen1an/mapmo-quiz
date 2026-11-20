@@ -550,8 +550,15 @@
   let qProgressFill, qProgressBarRole, qStepIndicator, qSectionLabel, qBackBtn;
   let qSectionQuoteBanner, qSectionQuoteTitle, qSectionQuoteText;
   let qPromptText, qOptionsContainer;
-  let standeeModal, adminModal, standeeQrHolder, cardFooterQrHolder;
+  let standeeModal, adminModal, mediaPreviewModal, standeeQrHolder, cardFooterQrHolder;
   let soundToggleBtn, standeeOpenBtn, adminOpenBtn;
+  const mediaPreviewState = {
+    objectUrl: '',
+    blob: null,
+    filename: 'MapMo-測驗結果.png',
+    shareTitle: 'MapMo 社群心理測驗',
+    shareText: '我在 MapMo 測出了我的社群派別，快來測測你是哪一派！'
+  };
 
   document.addEventListener('DOMContentLoaded', () => {
     cacheDOMElements();
@@ -582,6 +589,7 @@
 
     standeeModal = document.getElementById('standeeModal');
     adminModal = document.getElementById('adminModal');
+    mediaPreviewModal = document.getElementById('mediaPreviewModal');
     standeeQrHolder = document.getElementById('standeeQrHolder');
     cardFooterQrHolder = document.getElementById('cardFooterQrHolder');
 
@@ -599,6 +607,18 @@
           treeQrState.animFrameId = null;
         }
         document.body.classList.remove('print-bw-qr');
+      });
+    }
+
+    if (mediaPreviewModal) {
+      mediaPreviewModal.addEventListener('close', () => {
+        const previewImg = document.getElementById('mediaPreviewImg');
+        if (previewImg) previewImg.removeAttribute('src');
+        if (mediaPreviewState.objectUrl) {
+          URL.revokeObjectURL(mediaPreviewState.objectUrl);
+          mediaPreviewState.objectUrl = '';
+        }
+        mediaPreviewState.blob = null;
       });
     }
 
@@ -671,9 +691,30 @@
       downloadImgBtn.addEventListener('click', () => exportResultCardImage());
     }
 
+    const previewPosterBtn = document.getElementById('btnPreviewZinePoster');
+    if (previewPosterBtn) {
+      previewPosterBtn.addEventListener('click', () => openZinePosterPreview());
+    }
+
     const downloadPosterBtn = document.getElementById('btnDownloadZinePoster');
     if (downloadPosterBtn) {
-      downloadPosterBtn.addEventListener('click', () => downloadZinePosterFile());
+      downloadPosterBtn.addEventListener('click', () => {
+        if (isCompactTouchViewport()) {
+          openZinePosterPreview();
+        } else {
+          downloadZinePosterFile();
+        }
+      });
+    }
+
+    const mediaPreviewCloseBtn = document.getElementById('mediaPreviewCloseBtn');
+    if (mediaPreviewCloseBtn) {
+      mediaPreviewCloseBtn.addEventListener('click', () => closeMediaPreviewModal());
+    }
+
+    const sharePreviewBtn = document.getElementById('btnSharePreviewMedia');
+    if (sharePreviewBtn) {
+      sharePreviewBtn.addEventListener('click', () => shareActivePreviewMedia());
     }
 
     const openQrResultBtn = document.getElementById('btnOpenQrFromResult');
@@ -691,6 +732,7 @@
           ? '<i class="fas fa-volume-up" aria-hidden="true"></i><span class="pill-label-full"> 音效</span>'
           : '<i class="fas fa-volume-mute" aria-hidden="true"></i><span class="pill-label-full"> 靜音</span>';
         soundToggleBtn.setAttribute('aria-pressed', String(isSoundEnabled));
+        soundToggleBtn.setAttribute('aria-label', isSoundEnabled ? '切換互動音效（目前開啟）' : '切換互動音效（目前靜音）');
         soundToggleBtn.classList.toggle('active', isSoundEnabled);
         if (isSoundEnabled) playSound('tap');
       });
@@ -1138,6 +1180,118 @@
     return div;
   }
 
+  function isCompactTouchViewport() {
+    return (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches)
+      || window.innerWidth <= 768;
+  }
+
+  function supportsNativeFileShare(mimeType = 'image/png') {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function'
+      || typeof navigator.canShare !== 'function' || typeof File === 'undefined') {
+      return false;
+    }
+    try {
+      const dummy = new File([''], 'preview.png', { type: mimeType });
+      return navigator.canShare({ files: [dummy] });
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function closeMediaPreviewModal() {
+    if (mediaPreviewModal && mediaPreviewModal.open) mediaPreviewModal.close();
+  }
+
+  function openMediaPreviewModal({ src, alt, title, filename, blob, shareTitle, shareText, mimeType = 'image/png' }) {
+    if (!mediaPreviewModal) return;
+
+    if (mediaPreviewState.objectUrl) {
+      URL.revokeObjectURL(mediaPreviewState.objectUrl);
+      mediaPreviewState.objectUrl = '';
+    }
+    mediaPreviewState.blob = blob || null;
+    mediaPreviewState.filename = filename || 'MapMo-測驗結果.png';
+    mediaPreviewState.shareTitle = shareTitle || 'MapMo 社群心理測驗';
+    mediaPreviewState.shareText = shareText || '我在 MapMo 測出了我的社群派別，快來測測你是哪一派！';
+
+    let resolvedSrc = src || '';
+    if (blob && !resolvedSrc) {
+      mediaPreviewState.objectUrl = URL.createObjectURL(blob);
+      resolvedSrc = mediaPreviewState.objectUrl;
+    }
+
+    const imgEl = document.getElementById('mediaPreviewImg');
+    const titleEl = document.getElementById('mediaPreviewTitle');
+    const saveEl = document.getElementById('btnSavePreviewMedia');
+    const shareBtn = document.getElementById('btnSharePreviewMedia');
+
+    if (imgEl) {
+      imgEl.src = resolvedSrc;
+      imgEl.alt = alt || title || '測驗結果圖片預覽';
+    }
+    if (titleEl) {
+      titleEl.innerHTML = `<i class="fas fa-image" aria-hidden="true"></i> ${escapeHtml(title || '圖片預覽與儲存')}`;
+    }
+    if (saveEl) {
+      saveEl.href = resolvedSrc;
+      saveEl.download = mediaPreviewState.filename;
+    }
+    if (shareBtn) {
+      const canShareFiles = supportsNativeFileShare(mimeType);
+      shareBtn.hidden = !canShareFiles;
+      // If previewing an image URL without a synchronous Blob yet, prefetch cleanly so transient gesture share stays synchronous
+      if (canShareFiles && !blob && resolvedSrc) {
+        fetch(resolvedSrc)
+          .then((res) => (res.ok ? res.blob() : null))
+          .then((fetched) => {
+            if (fetched && mediaPreviewModal.open) {
+              mediaPreviewState.blob = fetched;
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
+    if (!mediaPreviewModal.open) mediaPreviewModal.showModal();
+    const box = mediaPreviewModal.querySelector('.standee-modal-box');
+    if (box) box.scrollTop = 0;
+  }
+
+  async function shareActivePreviewMedia() {
+    playSound('tap');
+    if (!mediaPreviewState.blob || typeof File === 'undefined' || typeof navigator.share !== 'function') {
+      showToast('💡 長按圖片即可儲存，或改點「下載高解析原圖」');
+      return;
+    }
+    const mime = mediaPreviewState.blob.type || 'image/png';
+    const file = new File([mediaPreviewState.blob], mediaPreviewState.filename, { type: mime });
+    try {
+      await navigator.share({
+        files: [file],
+        title: mediaPreviewState.shareTitle,
+        text: mediaPreviewState.shareText
+      });
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      showToast('💡 可直接長按圖片或點擊「下載高解析原圖」');
+    }
+  }
+
+  function openZinePosterPreview() {
+    playSound('tap');
+    if (!currentEvaluation || !currentEvaluation.mainPersona) return;
+    const p = currentEvaluation.mainPersona;
+    openMediaPreviewModal({
+      src: p.posterImg,
+      alt: `${p.name}《習慣特刊》專刊海報`,
+      title: `《習慣特刊》${p.name}海報`,
+      filename: `MapMo-習慣特刊-${p.name}.jpg`,
+      shareTitle: `MapMo《習慣特刊》${p.name}`,
+      shareText: `我是 MapMo「${p.name}」：${p.motto}`,
+      mimeType: 'image/jpeg'
+    });
+  }
+
   function downloadZinePosterFile() {
     playSound('tap');
     if (!currentEvaluation || !currentEvaluation.mainPersona) return;
@@ -1305,9 +1459,22 @@
       try {
         canvas.toBlob((blob) => {
           if (!blob) return;
+          const filename = `MapMo社群派別-${p.name}.png`;
+          if (isCompactTouchViewport()) {
+            openMediaPreviewModal({
+              alt: `MapMo 心理測驗結果檔案：${p.name}`,
+              title: `${p.name} · 測驗結果檔案圖`,
+              filename,
+              blob,
+              shareTitle: `我是「${p.name}」｜MapMo 社群心理測驗`,
+              shareText: `我在 MapMo 測出與「${p.name}」吻合度 ${ev.mainPct}%！測測你是哪一種社群派？ ${getQuizURL()}`,
+              mimeType: 'image/png'
+            });
+            return;
+          }
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.download = `MapMo社群派別-${p.name}.png`;
+          a.download = filename;
           a.href = url;
           a.click();
           URL.revokeObjectURL(url);
@@ -2549,9 +2716,9 @@
     if (liveTotalEl) liveTotalEl.textContent = String(total);
     if (dotEl) dotEl.classList.toggle('offline', !configured || (!statsState.isOnline && !statsState.isSyncing));
     if (noteEl) {
-      if (!configured) noteEl.textContent = '目前為本機統計模式（填入 Google 試算表網址即可跨裝置同步）';
-      else if (statsState.isOnline) noteEl.textContent = pendingCount > 0 ? `Google 試算表已連線 · ${pendingCount} 筆補傳中` : 'Google 試算表雲端即時統計（0 額度負擔）';
-      else if (statsState.isSyncing) noteEl.textContent = '正在連線 Google 試算表同步統計...';
+      if (!configured) noteEl.textContent = '目前為本機匿名統計中';
+      else if (statsState.isOnline) noteEl.textContent = pendingCount > 0 ? `全場匿名統計同步中（${pendingCount} 筆待補傳）` : '全場匿名統計即時更新中';
+      else if (statsState.isSyncing) noteEl.textContent = '正在連線同步全場匿名統計...';
       else noteEl.textContent = `暫離線快取顯示（待補同步 ${pendingCount} 筆）`;
     }
 
@@ -2590,8 +2757,8 @@
       if (resultHeadline) resultHeadline.textContent = `全場累積 ${total} 人測驗，其中 ${myCnt} 人（${myPct}%）和你同屬「${p.name}」`;
       if (resultBars) resultBars.innerHTML = buildBarsHtml(highlightPersonaId);
       if (resultBadge) {
-        if (!configured) resultBadge.textContent = '已記錄（本機模式）';
-        else resultBadge.textContent = statsState.isOnline ? '已送入 Google 試算表' : '暫存待試算表同步';
+        if (!configured) resultBadge.textContent = '已記錄（本機）';
+        else resultBadge.textContent = statsState.isOnline ? '全場即時同步' : '暫存待雲端同步';
       }
     }
   }
@@ -2885,10 +3052,10 @@
         const pct = total > 0 ? ((cnt / total) * 100).toFixed(1) : '0.0';
         return `
           <tr>
-            <td><strong><span class="live-stat-dot" style="background:${p.barColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(p.name)}</strong></td>
-            <td>${escapeHtml(p.traitSummary)}</td>
-            <td><strong>${cnt}</strong></td>
-            <td>${pct}%</td>
+            <td data-label="派別名稱"><strong><span class="live-stat-dot" style="background:${p.barColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(p.name)}</strong></td>
+            <td data-label="典型特徵">${escapeHtml(p.traitSummary)}</td>
+            <td data-label="累積人數"><strong>${cnt}</strong></td>
+            <td data-label="佔比">${pct}%</td>
           </tr>
         `;
       }).join('');
@@ -2902,10 +3069,10 @@
         const pct = q11Dist.total > 0 ? ((cnt / q11Dist.total) * 100).toFixed(1) : '0.0';
         return `
           <tr>
-            <td><strong>${escapeHtml(opt.letter)}</strong></td>
-            <td>${escapeHtml(opt.text)}</td>
-            <td><strong>${cnt}</strong></td>
-            <td>${pct}%</td>
+            <td data-label="選項"><strong>${escapeHtml(opt.letter)}</strong></td>
+            <td data-label="心聲內容">${escapeHtml(opt.text)}</td>
+            <td data-label="選擇人數"><strong>${cnt}</strong></td>
+            <td data-label="佔比">${pct}%</td>
           </tr>
         `;
       }).join('');
@@ -2922,12 +3089,12 @@
 
     tbody.innerHTML = statsState.records.slice(0, 100).map((r, i) => `
       <tr>
-        <td>${i + 1}</td>
-        <td>${escapeHtml(r.createdAtLocal || r.createdAtIso)}</td>
-        <td><code>${escapeHtml(r.serial || '—')}</code></td>
-        <td><strong>${escapeHtml(r.personaName || r.personaId)}</strong><br><small style="color:#786E60;">${escapeHtml(r.emotionLabel || '')}</small></td>
-        <td class="wrap-cell">${escapeHtml(r.pathSummary || '—')}</td>
-        <td>${escapeHtml(r.deviceType || '—')}</td>
+        <td data-label="#">${i + 1}</td>
+        <td data-label="完成時間">${escapeHtml(r.createdAtLocal || r.createdAtIso)}</td>
+        <td data-label="檔案編號"><code>${escapeHtml(r.serial || '—')}</code></td>
+        <td data-label="主派別"><span><strong>${escapeHtml(r.personaName || r.personaId)}</strong><br><small style="color:#786E60;">${escapeHtml(r.emotionLabel || '')}</small></span></td>
+        <td data-label="Q11與吻合" class="wrap-cell">${escapeHtml(r.pathSummary || '—')}</td>
+        <td data-label="裝置">${escapeHtml(r.deviceType || '—')}</td>
       </tr>
     `).join('');
   }

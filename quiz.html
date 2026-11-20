@@ -22,10 +22,10 @@
     <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
 
     <!-- Site Base Variables -->
-    <link rel="stylesheet" href="style.css?v=20261119_v3">
+    <link rel="stylesheet" href="style.css?v=20261121_m1">
 
     <!-- Dedicated Editorial Quiz CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261119_v3">
+    <link rel="stylesheet" href="quiz.css?v=20261121_m1">
 </head>
 
 <body class="quiz-page">
@@ -45,11 +45,11 @@
             </a>
 
             <div class="nav-actions-group">
-                <button type="button" class="pill-action-btn" id="adminOpenBtn" aria-label="開啟數據後台與 Excel 匯出">
+                <button type="button" class="pill-action-btn nav-admin-btn" id="adminOpenBtn" aria-label="開啟數據後台與 Excel 匯出">
                     <i class="fas fa-chart-bar" aria-hidden="true"></i><span class="pill-label-full"> 數據後台</span><span class="pill-label-short"> 後台</span>
                 </button>
-                <button type="button" class="pill-action-btn" id="standeeOpenBtn" aria-label="開啟展場立牌與黑白列印 QR">
-                    <i class="fas fa-qrcode" aria-hidden="true"></i><span class="pill-label-full"> 展場 QR</span><span class="pill-label-short"> QR</span>
+                <button type="button" class="pill-action-btn" id="standeeOpenBtn" aria-label="開啟測驗 QR Code 與分享">
+                    <i class="fas fa-qrcode" aria-hidden="true"></i><span class="pill-label-full"> 展場 QR</span><span class="pill-label-short"> 分享</span>
                 </button>
                 <button type="button" class="pill-action-btn active" id="soundToggleBtn" aria-pressed="true" aria-label="切換互動音效">
                     <i class="fas fa-volume-up" aria-hidden="true"></i><span class="pill-label-full"> 音效</span>
@@ -132,7 +132,15 @@
                             </svg>
                         </div>
 
-                        <!-- 虛線路線預告 -->
+                        <!-- 主要 CTA 按鈕 (置頂確保手機首屏直接看見) -->
+                        <div class="start-cta-row">
+                            <button type="button" class="start-btn-sketch" id="startQuizBtn">
+                                <span>翻開測驗檔案・開始探索</span>
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <!-- 虛線路線預告 (桌面版顯示) -->
                         <div class="adventure-route-strip" aria-hidden="true">
                             <span class="route-node"><i class="fas fa-camera"></i> 一、記錄生活</span>
                             <span class="route-dots">• • • •</span>
@@ -141,14 +149,6 @@
                             <span class="route-node"><i class="fas fa-eye"></i> 三、別人的眼光</span>
                             <span class="route-dots">• • • •</span>
                             <span class="route-node highlight"><i class="fas fa-feather-alt"></i> 結尾真心話</span>
-                        </div>
-
-                        <!-- 主要 CTA 按鈕 -->
-                        <div class="start-cta-row">
-                            <button type="button" class="start-btn-sketch" id="startQuizBtn">
-                                <span>翻開測驗檔案・開始探索</span>
-                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                            </button>
                         </div>
 
                         <!-- 五位代表人物角色預覽圖鑑條 -->
@@ -175,18 +175,8 @@
                             </div>
                         </div>
 
-                        <!-- 展場 QR 快捷列 -->
-                        <div class="start-qr-quick-row">
-                            <button type="button" class="sketch-chip-btn" id="btnOpenTreeQrFromHome">
-                                <i class="fas fa-tree" style="color: #4D7C0F;" aria-hidden="true"></i> 3D 情緒樹 QR
-                            </button>
-                            <button type="button" class="sketch-chip-btn dark" id="btnOpenBwQrFromHome">
-                                <i class="fas fa-print" aria-hidden="true"></i> 黑白列印版 QR
-                            </button>
-                        </div>
-
                         <p class="start-exhibition-hint">
-                            <i class="fas fa-check-circle" style="color: #16A34A;" aria-hidden="true"></i> 已有 <strong id="startTotalBadge">0</strong> 人完成檔案探測・展覽現場支援一鍵掃碼
+                            <i class="fas fa-check-circle" style="color: #16A34A;" aria-hidden="true"></i> 已有 <strong id="startTotalBadge">0</strong> 人完成檔案探測・約 2 分鐘匿名測出結果
                         </p>
                     </div>
                 </div>
@@ -204,12 +194,27 @@
                     </div>
                     <div class="live-stats-bars" id="liveStatsBars"></div>
                     <div class="live-stats-footer">
-                        <span class="live-stats-source-note" id="liveStatsSourceNote">Google 試算表雲端即時統計</span>
-                        <button type="button" class="live-stats-admin-link" id="btnOpenAdminFromHome">
-                            <i class="fas fa-table" aria-hidden="true"></i> 後台明細 / Excel 試算表
-                        </button>
+                        <span class="live-stats-source-note" id="liveStatsSourceNote">全場匿名統計即時更新中</span>
                     </div>
                 </div>
+
+                <!-- 展場工作人員工具 (收納於頁面最底，不干擾手機訪客首屏動線) -->
+                <details class="exhibitor-tools-drawer" id="exhibitorToolsDrawer">
+                    <summary><i class="fas fa-sliders-h" aria-hidden="true"></i> 展場工作人員工具（立牌 QR · 數據後台）</summary>
+                    <div class="exhibitor-tools-body">
+                        <div class="start-qr-quick-row">
+                            <button type="button" class="sketch-chip-btn" id="btnOpenTreeQrFromHome">
+                                <i class="fas fa-tree" style="color: #4D7C0F;" aria-hidden="true"></i> 3D 情緒樹 QR
+                            </button>
+                            <button type="button" class="sketch-chip-btn dark" id="btnOpenBwQrFromHome">
+                                <i class="fas fa-print" aria-hidden="true"></i> 黑白列印版 QR
+                            </button>
+                            <button type="button" class="live-stats-admin-link" id="btnOpenAdminFromHome">
+                                <i class="fas fa-table" aria-hidden="true"></i> 後台明細 / Excel 匯出
+                            </button>
+                        </div>
+                    </div>
+                </details>
             </div>
         </section>
 
@@ -320,26 +325,29 @@
                         <div class="spectrum-bars-list" id="spectrumBarsList"></div>
                     </div>
 
-                    <!-- 特刊答案海報收藏區（可直接預覽或下載對應習慣特刊海報） -->
+                    <!-- 特刊答案海報收藏區（點擊放大閱讀或儲存） -->
                     <div class="result-poster-showcase">
                         <div class="poster-thumb-wrap">
-                            <img
-                                id="resultPosterImg"
-                                src="assets/personas/stealth-poster.jpg"
-                                alt="習慣特刊答案海報"
-                                width="723"
-                                height="1024"
-                                fetchpriority="low"
-                                decoding="async"
-                                class="poster-thumb-img"
-                            >
+                            <button type="button" class="poster-thumb-btn" id="btnPreviewZinePoster" aria-label="放大閱讀《習慣特刊》專刊海報">
+                                <img
+                                    id="resultPosterImg"
+                                    src="assets/personas/stealth-poster.jpg"
+                                    alt="習慣特刊答案海報"
+                                    width="723"
+                                    height="1024"
+                                    fetchpriority="low"
+                                    decoding="async"
+                                    class="poster-thumb-img"
+                                >
+                                <span class="poster-zoom-badge" aria-hidden="true"><i class="fas fa-search-plus"></i> 放大</span>
+                            </button>
                         </div>
                         <div class="poster-copy-col">
                             <span class="poster-eyebrow">COLLECTIBLE ZINE · 專屬特刊</span>
                             <h3 class="poster-card-heading" id="posterCardHeading">《習慣特刊》悄悄發佈派專刊</h3>
                             <p class="poster-card-desc" id="posterObserveDesc"></p>
                             <button type="button" class="btn-download-poster-only" id="btnDownloadZinePoster">
-                                <i class="fas fa-newspaper" aria-hidden="true"></i> 下載這張《習慣特刊》原圖海報
+                                <i class="fas fa-newspaper" aria-hidden="true"></i> 查看・儲存這張特刊海報
                             </button>
                         </div>
                     </div>
@@ -378,23 +386,18 @@
                     </div>
                 </article>
 
-                <!-- 4. 「再測一次」與分享/下載動作列 -->
+                <!-- 4. 分享/儲存圖卡、複製連結與再測一次 -->
                 <div class="result-action-toolbar">
-                    <div class="action-row-buttons">
-                        <button type="button" class="btn-result-action primary" id="btnRestartQuiz">
-                            <i class="fas fa-redo-alt" aria-hidden="true"></i> 再測一次
-                        </button>
-                        <button type="button" class="btn-result-action secondary" id="btnDownloadResultImg">
-                            <i class="fas fa-download" aria-hidden="true"></i> 下載測驗結果分享圖
-                        </button>
-                    </div>
+                    <button type="button" class="btn-result-action primary full-width-action" id="btnDownloadResultImg">
+                        <i class="fas fa-share-square" aria-hidden="true"></i> 分享 / 儲存我的測驗圖卡
+                    </button>
 
                     <div class="action-row-buttons">
                         <button type="button" class="btn-result-action secondary" id="btnCopyQuizLink">
-                            <i class="fas fa-share-alt" aria-hidden="true"></i> 複製測驗連結分享
+                            <i class="fas fa-link" aria-hidden="true"></i> 複製測驗連結
                         </button>
-                        <button type="button" class="btn-result-action secondary" id="btnOpenQrFromResult">
-                            <i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌 / 黑白 QR
+                        <button type="button" class="btn-result-action secondary" id="btnRestartQuiz">
+                            <i class="fas fa-redo-alt" aria-hidden="true"></i> 再測一次
                         </button>
                     </div>
                 </div>
@@ -403,10 +406,16 @@
                 <div class="result-crowd-card" id="resultCrowdCard">
                     <div class="result-crowd-header">
                         <span class="result-crowd-tag"><i class="fas fa-users" aria-hidden="true"></i> 展場即時人數對照</span>
-                        <span class="result-crowd-sync" id="resultCrowdSyncBadge">同步完成</span>
+                        <span class="result-crowd-sync" id="resultCrowdSyncBadge">全場即時同步</span>
                     </div>
                     <p class="result-crowd-headline" id="resultCrowdHeadline">正在讀取全站人格統計...</p>
                     <div class="live-stats-bars compact" id="resultCrowdBars"></div>
+                </div>
+
+                <div class="result-staff-footer">
+                    <button type="button" class="result-staff-qr-link" id="btnOpenQrFromResult">
+                        <i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌 / 列印黑白 QR 工具
+                    </button>
                 </div>
 
             </div>
@@ -419,10 +428,12 @@
          ─────────────────────────────────────────────── -->
     <dialog class="native-modal-dialog tree-qr-dialog" id="standeeModal" closedby="any" aria-labelledby="standeeDialogTitle">
         <div class="standee-modal-box tree-qr-studio-box">
-            <h2 id="standeeDialogTitle" class="visually-hidden">展場 3D 情緒樹與黑白列印 QR Code 工具</h2>
-            <button type="button" class="standee-modal-close" id="standeeCloseBtn" aria-label="關閉 QR Code 視窗">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
+            <div class="modal-sticky-header tree-qr-sticky-bar">
+                <h2 id="standeeDialogTitle" class="modal-sticky-label"><i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌與分享 QR 工具</h2>
+                <button type="button" class="standee-modal-close" id="standeeCloseBtn" aria-label="關閉 QR Code 視窗">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
 
             <div class="qr-studio-tabs" role="tablist" aria-label="QR Code 樣式模式">
                 <button type="button" class="qr-studio-tab active" id="tabTreeQrBtn" role="tab" aria-selected="true" aria-controls="treeQrPane">
@@ -515,7 +526,7 @@
                     <div class="bw-qr-frame">
                         <canvas id="bwQrCanvas" width="420" height="420"></canvas>
                     </div>
-                    <p class="bw-print-caption">打開手機相機對準黑白條碼即可進入 · 11 題約 2 分鐘</p>
+                    <p class="bw-print-caption">手機相機對準條碼即可進入 · 11 題約 2 分鐘</p>
                     <div class="bw-print-url" id="bwPrintUrlDisplay">https://chen1an.github.io/mapmo-quiz/</div>
                 </div>
 
@@ -549,13 +560,16 @@
          ─────────────────────────────────────────────── -->
     <dialog class="native-modal-dialog admin-dialog" id="adminModal" closedby="any" aria-labelledby="adminModalTitle">
         <div class="standee-modal-box admin-modal-box">
-            <button type="button" class="standee-modal-close" id="adminCloseBtn" aria-label="關閉後台視窗">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
+            <div class="modal-sticky-header admin-sticky-bar">
+                <span class="modal-sticky-label"><i class="fas fa-table" aria-hidden="true"></i> MAPMO QUIZ BACKEND</span>
+                <button type="button" class="standee-modal-close" id="adminCloseBtn" aria-label="關閉後台視窗">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
 
             <div class="admin-header-row">
                 <div>
-                    <span class="admin-eyebrow">MAPMO QUIZ BACKEND · GOOGLE SHEETS</span>
+                    <span class="admin-eyebrow">GOOGLE SHEETS · REALTIME ANALYTICS</span>
                     <h2 class="admin-title" id="adminModalTitle">Google 試算表數據與 Excel 匯出</h2>
                 </div>
                 <div class="admin-status-badge" id="adminSyncStatus">
@@ -617,8 +631,8 @@
             <!-- 五大派別統計表 -->
             <div class="admin-section-block">
                 <h3 class="admin-sec-heading"><i class="fas fa-chart-pie" aria-hidden="true"></i> 五大社群派別統計總表</h3>
-                <div class="admin-table-wrap">
-                    <table class="admin-table">
+                <div class="admin-table-wrap" tabindex="0" role="region" aria-label="五大社群派別統計總表">
+                    <table class="admin-table admin-responsive-table">
                         <thead>
                             <tr>
                                 <th scope="col">派別名稱</th>
@@ -635,8 +649,8 @@
             <!-- Q11 展板數據統計（PDF 要求：不計分但記錄答案作展板數據） -->
             <div class="admin-section-block">
                 <h3 class="admin-sec-heading"><i class="fas fa-feather-alt" aria-hidden="true"></i> Q11 展板數據：不用擔心誰看到時，最想分享什麼？</h3>
-                <div class="admin-table-wrap">
-                    <table class="admin-table">
+                <div class="admin-table-wrap" tabindex="0" role="region" aria-label="Q11 展板數據統計">
+                    <table class="admin-table admin-responsive-table">
                         <thead>
                             <tr>
                                 <th scope="col">選項</th>
@@ -656,8 +670,8 @@
                     <h3 class="admin-sec-heading"><i class="fas fa-list-ul" aria-hidden="true"></i> 近期作答明細（刪除列請直接至 Google 試算表操作）</h3>
                     <button type="button" class="admin-reset-link" id="btnResetTestStats">清除本機暫存紀錄</button>
                 </div>
-                <div class="admin-table-wrap tall">
-                    <table class="admin-table records-table">
+                <div class="admin-table-wrap tall" tabindex="0" role="region" aria-label="近期作答明細">
+                    <table class="admin-table records-table admin-responsive-table">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -675,6 +689,32 @@
         </div>
     </dialog>
 
+    <!-- ───────────────────────────────────────────────
+         5. Native <dialog> 手機結果圖卡 & 特刊海報放大預覽 / 原生分享 (#mediaPreviewModal)
+         ─────────────────────────────────────────────── -->
+    <dialog class="native-modal-dialog media-preview-dialog" id="mediaPreviewModal" closedby="any" aria-labelledby="mediaPreviewTitle">
+        <div class="standee-modal-box media-preview-box">
+            <div class="modal-sticky-header media-sticky-bar">
+                <h2 class="modal-sticky-label" id="mediaPreviewTitle"><i class="fas fa-image" aria-hidden="true"></i> 圖片預覽與儲存</h2>
+                <button type="button" class="standee-modal-close" id="mediaPreviewCloseBtn" aria-label="關閉圖片預覽視窗">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="media-preview-stage">
+                <img id="mediaPreviewImg" src="" alt="" class="media-preview-img">
+            </div>
+            <p class="media-preview-tip"><i class="fas fa-hand-pointer" aria-hidden="true"></i> 長按圖片即可存進相簿，或點下方分享／下載</p>
+            <div class="media-preview-actions">
+                <button type="button" class="btn-result-action primary" id="btnSharePreviewMedia" hidden>
+                    <i class="fas fa-share-alt" aria-hidden="true"></i> 分享到 IG / LINE / 存相簿
+                </button>
+                <a class="btn-result-action secondary" id="btnSavePreviewMedia" href="#" download="mapmo-result.png">
+                    <i class="fas fa-download" aria-hidden="true"></i> 下載高解析原圖
+                </a>
+            </div>
+        </div>
+    </dialog>
+
     <!-- Toast Notification -->
     <div class="toast-notification" id="toastNotification" role="status" aria-live="polite">
         <i class="fas fa-check-circle" aria-hidden="true"></i> <span id="toastMessage">已複製！</span>
@@ -682,7 +722,7 @@
 
     <!-- Scripts -->
     <script src="assets/vendor/qrcode.js"></script>
-    <script src="quiz.js?v=20261119_v3"></script>
+    <script src="quiz.js?v=20261121_m1"></script>
 </body>
 
 </html>
