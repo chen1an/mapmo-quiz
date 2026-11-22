@@ -2461,6 +2461,26 @@
   // ─────────────────────────────────────────────────────────
   // 11. Google 試算表後台數據引擎 (11 題相似度 + Q11 展板數據 + Excel 匯出)
   // ─────────────────────────────────────────────────────────
+  function isLocalDevHost() {
+    try {
+      if (window.location.protocol === 'file:') return true;
+      const host = String(window.location.hostname || '').toLowerCase();
+      return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isLiveSyncBlockedOnLocalhost() {
+    if (!isLocalDevHost()) return false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('liveSync') !== '1';
+    } catch (_) {
+      return true;
+    }
+  }
+
   function getSheetsEndpointUrl() {
     const inputEl = document.getElementById('sheetsWebhookInput');
     const uiVal = inputEl && inputEl.value ? inputEl.value.trim() : '';
@@ -2479,14 +2499,18 @@
 
     if (statsState.isConfigured) {
       fetchSummaryFromSheets(false);
-      flushPendingSubmissions();
+      if (!isLiveSyncBlockedOnLocalhost()) {
+        flushPendingSubmissions();
+      }
     }
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === '1') openAdminModal();
 
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && getSheetsEndpointUrl()) flushPendingSubmissions();
+      if (!document.hidden && getSheetsEndpointUrl() && !isLiveSyncBlockedOnLocalhost()) {
+        flushPendingSubmissions();
+      }
     });
   }
 
@@ -2617,7 +2641,7 @@
   let isFlushingQueue = false;
   async function flushPendingSubmissions() {
     const endpoint = getSheetsEndpointUrl();
-    if (!endpoint || isFlushingQueue) return;
+    if (!endpoint || isFlushingQueue || isLiveSyncBlockedOnLocalhost()) return;
     const queue = getPendingQueue();
     if (queue.length === 0) return;
 
@@ -2679,6 +2703,11 @@
 
     const endpoint = getSheetsEndpointUrl();
     statsState.isConfigured = Boolean(endpoint);
+    if (isLiveSyncBlockedOnLocalhost()) {
+      statsState.isOnline = false;
+      renderCrowdStatsUI(p.id);
+      return;
+    }
     if (!endpoint) {
       const q = getPendingQueue();
       q.push(payload);
@@ -2711,12 +2740,14 @@
     const noteEl = document.getElementById('liveStatsSourceNote');
     const pendingCount = getPendingQueue().length;
     const configured = Boolean(getSheetsEndpointUrl());
+    const localBlocked = isLiveSyncBlockedOnLocalhost();
 
     if (startBadge) startBadge.textContent = String(total);
     if (liveTotalEl) liveTotalEl.textContent = String(total);
-    if (dotEl) dotEl.classList.toggle('offline', !configured || (!statsState.isOnline && !statsState.isSyncing));
+    if (dotEl) dotEl.classList.toggle('offline', !configured || localBlocked || (!statsState.isOnline && !statsState.isSyncing));
     if (noteEl) {
-      if (!configured) noteEl.textContent = '目前為本機匿名統計中';
+      if (localBlocked) noteEl.textContent = '本機預覽模式（已阻擋寫入試算表，加 ?liveSync=1 可測同步）';
+      else if (!configured) noteEl.textContent = '目前為本機匿名統計中';
       else if (statsState.isOnline) noteEl.textContent = pendingCount > 0 ? `全場匿名統計同步中（${pendingCount} 筆待補傳）` : '全場匿名統計即時更新中';
       else if (statsState.isSyncing) noteEl.textContent = '正在連線同步全場匿名統計...';
       else noteEl.textContent = `暫離線快取顯示（待補同步 ${pendingCount} 筆）`;
