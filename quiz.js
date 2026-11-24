@@ -1179,9 +1179,9 @@
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    features.primary.forEach((f) => listEl.appendChild(createFeatureCard(f, '主要適合', 'primary')));
+    features.primary.forEach((f) => listEl.appendChild(createFeatureCard(f, '適合', 'primary')));
     if (features.secondary) {
-      features.secondary.forEach((f) => listEl.appendChild(createFeatureCard(f, '進階推薦', 'secondary')));
+      features.secondary.forEach((f) => listEl.appendChild(createFeatureCard(f, '推薦', 'secondary')));
     }
   }
 
