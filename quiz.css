@@ -143,10 +143,11 @@ body.quiz-page {
 .logo-avatar {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 50%;
   overflow: hidden;
-  border: 1.5px solid var(--ink-black);
-  background: #FFFDF8;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   flex-shrink: 0;
 }
 
@@ -259,36 +260,6 @@ body.quiz-page {
   width: 100%;
 }
 
-.journal-issue-ribbon {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.ribbon-tag {
-  font-family: var(--font-en);
-  font-size: 11.5px;
-  font-weight: 900;
-  letter-spacing: 0.9px;
-  background: var(--ink-black);
-  color: var(--marker-yellow);
-  padding: 4px 12px;
-  border-radius: 99px;
-}
-
-.ribbon-date {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--ink-black);
-  background: rgba(255, 253, 248, 0.78);
-  border: 1.5px solid var(--ink-black);
-  padding: 3px 11px;
-  border-radius: 99px;
-}
-
 .journal-kicker-note {
   margin: 0 0 6px;
   font-size: clamp(0.95rem, 2.2vw, 1.15rem);
@@ -326,17 +297,15 @@ body.quiz-page {
   transform: translateX(8px) rotate(1.5deg);
 }
 
-/* Central 3D Pop-up Journal Frame */
+/* Central 3D Pop-up Journal (Frameless) */
 .journal-diorama-frame {
   position: relative;
   width: 100%;
   max-width: 660px;
   margin: 4px auto 2px;
-  border-radius: 22px;
-  border: 2.5px solid var(--ink-black);
-  background: #D7C6A5;
-  box-shadow: var(--sketch-shadow), var(--ambient-shadow);
-  overflow: visible;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .journal-diorama-img {
@@ -345,152 +314,18 @@ body.quiz-page {
   aspect-ratio: 1200 / 896;
   object-fit: cover;
   display: block;
-  border-radius: 19px;
+  border-radius: 18px;
 }
 
-.tape-strip {
-  position: absolute;
-  width: 82px;
-  height: 22px;
-  background: rgba(255, 246, 209, 0.85);
-  border: 1.5px solid rgba(30, 27, 22, 0.35);
-  z-index: 3;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-
-.tape-top-left {
-  top: -10px;
-  left: 24px;
-  transform: rotate(-8deg);
-}
-
-.tape-top-right {
-  top: -10px;
-  right: 24px;
-  transform: rotate(7deg);
-}
-
-.journal-stamp-badge {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 253, 248, 0.94);
-  border: 1.5px solid var(--ink-black);
-  color: var(--ink-black);
-  padding: 5px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 800;
-  box-shadow: 2px 2px 0 var(--ink-black);
-}
-
-/* Deckle/Torn Kraft Note Card */
-.torn-paper-card {
+/* Frameless CTA + 5-Persona Row */
+.start-actions-stage {
   container-type: inline-size;
   width: 100%;
   max-width: 660px;
-  position: relative;
-  background: var(--parchment-light);
-  border: 2px solid var(--ink-black);
-  border-radius: 18px;
-  box-shadow: var(--sketch-shadow), var(--ambient-shadow);
-  padding: clamp(1rem, 4cqi, 1.625rem) clamp(0.9rem, 4cqi, 1.625rem) clamp(0.9rem, 3.5cqi, 1.375rem);
-  background-image:
-    radial-gradient(rgba(30, 27, 22, 0.06) 1px, transparent 1px);
-  background-size: 18px 18px;
-}
-
-.torn-paper-card::before {
-  content: "";
-  position: absolute;
-  top: 7px;
-  left: 12px;
-  right: 12px;
-  height: 6px;
-  border-top: 2px dashed rgba(30, 27, 22, 0.16);
-  pointer-events: none;
-}
-
-.torn-card-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-}
-
-.torn-headline-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  width: 100%;
-}
-
-.doodle-magnifier {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  transform: rotate(-10deg);
-}
-
-.doodle-compass {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  transform: rotate(8deg);
-}
-
-.torn-copy-block {
-  flex: 1;
-  text-align: center;
-}
-
-.torn-card-title {
-  margin: 0 0 6px;
-  font-size: clamp(1.12rem, 0.94rem + 1.15cqi, 1.55rem);
-  font-weight: 900;
-  color: var(--ink-black);
-}
-
-.torn-card-sub {
-  margin: 0;
-  font-size: clamp(0.84rem, 0.78rem + 0.38cqi, 0.96rem);
-  line-height: 1.62;
-  color: var(--ink-brown);
-}
-
-.adventure-route-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  width: 100%;
-  padding: 10px 12px;
-  background: rgba(255, 253, 248, 0.72);
-  border: 1.5px dashed rgba(30, 27, 22, 0.25);
-  border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 800;
-  color: var(--ink-brown);
-}
-
-.route-node {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.route-node.highlight {
-  color: var(--terracotta-deep);
-}
-
-.route-dots {
-  color: rgba(30, 27, 22, 0.35);
-  font-size: 10px;
+  gap: clamp(12px, 2dvh, 18px);
 }
 
 .start-cta-row {
@@ -604,13 +439,6 @@ body.quiz-page {
 
 .sketch-chip-btn:active {
   transform: scale(0.97);
-}
-
-.start-exhibition-hint {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-brown);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -2415,14 +2243,12 @@ dialog.native-modal-dialog.media-preview-dialog {
    Note: Multi-clause CJK question prompts/options use semantic clause wrapping (.q-clause/.q-chunk)
    rather than text-wrap: balance/pretty to avoid splitting Chinese compound words evenly by pixel width. */
 .journal-display-title,
-.torn-card-title,
 .result-persona-name,
 .poster-card-heading,
 .admin-title {
   text-wrap: balance;
 }
 
-.torn-card-sub,
 .result-description-text,
 .poster-card-desc,
 .feature-desc,
@@ -2469,18 +2295,6 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 }
 
-@media (max-width: 520px) {
-  .adventure-route-strip {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    justify-items: center;
-  }
-  .route-dots {
-    display: none;
-  }
-}
-
 @media (max-width: 639px) {
   /* 頂部手機極簡化：隱藏一般訪客不需要的「後台」按鈕，專注體驗 */
   .quiz-nav-badge,
@@ -2519,24 +2333,9 @@ dialog.native-modal-dialog.media-preview-dialog {
     padding: 10px 14px 44px;
   }
 
-  /* Start Screen — 依比例自適應 320px 小螢幕 ～ 430px 大手機，並保證首屏直接露出 CTA */
+  /* Start Screen — 依比例自適應 320px 小螢幕 ～ 430px 大手機，並保證首屏直接露出 CTA 與五大派別 */
   .journal-hero-stage {
-    gap: clamp(8px, 1.6dvh, 13px);
-  }
-
-  .journal-issue-ribbon {
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .ribbon-tag {
-    font-size: clamp(0.64rem, 0.58rem + 0.35vw, 0.72rem);
-    padding: 3px 9px;
-  }
-
-  .ribbon-date {
-    font-size: clamp(0.68rem, 0.62rem + 0.35vw, 0.75rem);
-    padding: 2px 9px;
+    gap: clamp(10px, 1.8dvh, 15px);
   }
 
   .journal-kicker-note {
@@ -2557,44 +2356,13 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .journal-diorama-img {
-    height: clamp(7.8rem, min(22dvh, 42vw), 13.5rem);
+    height: clamp(8.5rem, min(24dvh, 45vw), 14.5rem);
     aspect-ratio: auto;
     object-position: center 46%;
   }
 
-  .tape-strip {
-    width: clamp(50px, 15vw, 70px);
-    height: clamp(14px, 3vw, 18px);
-    top: -8px;
-  }
-
-  .journal-stamp-badge,
-  .adventure-route-strip,
-  .doodle-magnifier,
-  .doodle-compass {
-    display: none;
-  }
-
-  .torn-paper-card {
-    padding: clamp(0.95rem, 4cqi, 1.2rem) clamp(0.85rem, 3.8cqi, 1.15rem);
-  }
-
-  .torn-card-inner {
-    gap: clamp(9px, 1.6dvh, 13px);
-  }
-
-  .torn-card-title {
-    font-size: clamp(1.08rem, 0.95rem + 1cqi, 1.25rem);
-    margin-bottom: 4px;
-  }
-
-  .torn-card-sub {
-    font-size: clamp(0.82rem, 0.76rem + 0.38cqi, 0.92rem);
-    line-height: 1.5;
-  }
-
-  .torn-card-sub br {
-    display: none;
+  .start-actions-stage {
+    gap: clamp(10px, 1.8dvh, 14px);
   }
 
   .start-btn-sketch {
@@ -2640,11 +2408,6 @@ dialog.native-modal-dialog.media-preview-dialog {
 
   .cast-avatar-pill span {
     font-size: clamp(0.68rem, 0.56rem + 1cqi, 0.78rem);
-  }
-
-  .start-exhibition-hint {
-    font-size: clamp(0.74rem, 0.7rem + 0.25cqi, 0.82rem);
-    text-align: center;
   }
 
   .live-stats-card,
@@ -2937,14 +2700,6 @@ dialog.native-modal-dialog.media-preview-dialog {
     height: clamp(6.5rem, 30dvh, 9.5rem);
     aspect-ratio: auto;
     object-position: center 46%;
-  }
-
-  .journal-stamp-badge,
-  .tape-strip,
-  .doodle-magnifier,
-  .doodle-compass,
-  .adventure-route-strip {
-    display: none;
   }
 
   .quiz-step-card {

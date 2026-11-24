@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="style.css?v=20261121_f1">
 
     <!-- Dedicated Editorial Quiz CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261124_cjk2">
+    <link rel="stylesheet" href="quiz.css?v=20261124_hero1">
 </head>
 
 <body class="quiz-page">
@@ -68,13 +68,8 @@
         <section class="quiz-screen active" id="screenStart" aria-labelledby="heroMainHeading">
             <div class="journal-hero-stage">
 
-                <!-- 頂部檔案標籤與手寫風格標題 -->
+                <!-- 頂部手寫風格標題 -->
                 <div class="journal-title-cluster">
-                    <div class="journal-issue-ribbon">
-                        <span class="ribbon-tag">MAPMO ARCHIVE · NO.01–05</span>
-                        <span class="ribbon-date"><i class="fas fa-compass" aria-hidden="true"></i> 11 題 · 約 2 分鐘</span>
-                    </div>
-
                     <p class="journal-kicker-note">這裡記錄著每個人最真實的發文日常</p>
 
                     <h1 class="journal-display-title" id="heroMainHeading">
@@ -83,11 +78,8 @@
                     </h1>
                 </div>
 
-                <!-- 中央 3D 立體翻頁手札插畫 + 手繪放大鏡/膠帶裝飾 -->
+                <!-- 中央 3D 立體翻頁手札插畫（無外框純淨呈現） -->
                 <figure class="journal-diorama-frame">
-                    <div class="tape-strip tape-top-left" aria-hidden="true"></div>
-                    <div class="tape-strip tape-top-right" aria-hidden="true"></div>
-
                     <img
                         src="assets/personas/hero-popup-journal.jpg"
                         alt="打開的地圖日記手札，書頁浮現街角咖啡館、森林公園、海岸步道與心情拍立得"
@@ -97,88 +89,39 @@
                         decoding="async"
                         class="journal-diorama-img"
                     >
-
-                    <!-- 右上角落探險貼紙 -->
-                    <div class="journal-stamp-badge" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                        <span>無標準答案 · 測驗相似度</span>
-                    </div>
                 </figure>
 
-                <!-- 下方撕紙邊緣探險檔案卡 (Torn Kraft Note Card) -->
-                <div class="torn-paper-card">
-                    <div class="torn-card-inner">
-                        <div class="torn-headline-wrap">
-                            <!-- 手繪放大鏡 SVG -->
-                            <svg class="doodle-magnifier" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-                                <circle cx="27" cy="27" r="18" fill="#FFFDF7" stroke="#1E1B16" stroke-width="3.5"/>
-                                <circle cx="27" cy="27" r="13" stroke="#1E1B16" stroke-width="1.5" stroke-dasharray="3 3"/>
-                                <path d="M40 40L56 56" stroke="#1E1B16" stroke-width="6" stroke-linecap="round"/>
-                                <path d="M40 40L56 56" stroke="#C59B6D" stroke-width="3" stroke-linecap="round"/>
-                            </svg>
+                <!-- 開始測驗 CTA ＋ 下方五大社群派別預覽 -->
+                <div class="start-actions-stage">
+                    <div class="start-cta-row">
+                        <button type="button" class="start-btn-sketch" id="startQuizBtn">
+                            <span>翻開測驗檔案・開始探索</span>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
 
-                            <div class="torn-copy-block">
-                                <h2 class="torn-card-title">探索你未曾發出去的心事版圖</h2>
-                                <p class="torn-card-sub">
-                                    看到喜歡的瞬間，你會拍下來嗎？拍了，會發出去嗎？<br>
-                                    透過 <strong>10 題相似度比對 ＋ 1 題真心話</strong>，看看你在「潛水 → 備忘錄 → 悄悄 → 精修 → 隨心」光譜上的座標。
-                                </p>
-                            </div>
-
-                            <!-- 手繪指南針 SVG -->
-                            <svg class="doodle-compass" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-                                <circle cx="24" cy="24" r="19" fill="#FFF9E6" stroke="#1E1B16" stroke-width="2.8"/>
-                                <polygon points="24,10 29,24 24,22 19,24" fill="#D94E41" stroke="#1E1B16" stroke-width="1.5"/>
-                                <polygon points="24,38 19,24 24,26 29,24" fill="#FFFFFF" stroke="#1E1B16" stroke-width="1.5"/>
-                            </svg>
+                    <!-- 五位代表人物角色預覽圖鑑條 -->
+                    <div class="cast-preview-strip" aria-label="五大社群派系角色圖鑑預覽">
+                        <div class="cast-avatar-pill">
+                            <img src="assets/personas/lurker-char.png" alt="潛水觀察派插畫" width="120" height="81" loading="lazy">
+                            <span>潛水觀察派</span>
                         </div>
-
-                        <!-- 主要 CTA 按鈕 (置頂確保手機首屏直接看見) -->
-                        <div class="start-cta-row">
-                            <button type="button" class="start-btn-sketch" id="startQuizBtn">
-                                <span>翻開測驗檔案・開始探索</span>
-                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                            </button>
+                        <div class="cast-avatar-pill">
+                            <img src="assets/personas/diarist-char.png" alt="備忘錄日記派插畫" width="120" height="81" loading="lazy">
+                            <span>備忘錄日記派</span>
                         </div>
-
-                        <!-- 虛線路線預告 (桌面版顯示) -->
-                        <div class="adventure-route-strip" aria-hidden="true">
-                            <span class="route-node"><i class="fas fa-camera"></i> 一、記錄生活</span>
-                            <span class="route-dots">• • • •</span>
-                            <span class="route-node"><i class="fas fa-paper-plane"></i> 二、分享這件事</span>
-                            <span class="route-dots">• • • •</span>
-                            <span class="route-node"><i class="fas fa-eye"></i> 三、別人的眼光</span>
-                            <span class="route-dots">• • • •</span>
-                            <span class="route-node highlight"><i class="fas fa-feather-alt"></i> 結尾真心話</span>
+                        <div class="cast-avatar-pill">
+                            <img src="assets/personas/stealth-char.png" alt="悄悄發佈派插畫" width="120" height="81" loading="lazy">
+                            <span>悄悄發佈派</span>
                         </div>
-
-                        <!-- 五位代表人物角色預覽圖鑑條 -->
-                        <div class="cast-preview-strip" aria-label="五大社群派系角色圖鑑預覽">
-                            <div class="cast-avatar-pill">
-                                <img src="assets/personas/lurker-char.png" alt="潛水觀察派插畫" width="120" height="81" loading="lazy">
-                                <span>潛水觀察派</span>
-                            </div>
-                            <div class="cast-avatar-pill">
-                                <img src="assets/personas/diarist-char.png" alt="備忘錄日記派插畫" width="120" height="81" loading="lazy">
-                                <span>備忘錄日記派</span>
-                            </div>
-                            <div class="cast-avatar-pill">
-                                <img src="assets/personas/stealth-char.png" alt="悄悄發佈派插畫" width="120" height="81" loading="lazy">
-                                <span>悄悄發佈派</span>
-                            </div>
-                            <div class="cast-avatar-pill">
-                                <img src="assets/personas/curator-char.png" alt="精修完美派插畫" width="120" height="81" loading="lazy">
-                                <span>精修完美派</span>
-                            </div>
-                            <div class="cast-avatar-pill">
-                                <img src="assets/personas/freespirit-char.png" alt="隨心所欲派插畫" width="120" height="81" loading="lazy">
-                                <span>隨心所欲派</span>
-                            </div>
+                        <div class="cast-avatar-pill">
+                            <img src="assets/personas/curator-char.png" alt="精修完美派插畫" width="120" height="81" loading="lazy">
+                            <span>精修完美派</span>
                         </div>
-
-                        <p class="start-exhibition-hint">
-                            <i class="fas fa-check-circle" style="color: #16A34A;" aria-hidden="true"></i> 已有 <strong id="startTotalBadge">0</strong> 人完成・約 2 分鐘匿名測出結果
-                        </p>
+                        <div class="cast-avatar-pill">
+                            <img src="assets/personas/freespirit-char.png" alt="隨心所欲派插畫" width="120" height="81" loading="lazy">
+                            <span>隨心所欲派</span>
+                        </div>
                     </div>
                 </div>
 
