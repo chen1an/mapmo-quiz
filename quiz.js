@@ -563,7 +563,7 @@
   let qProgressFill, qProgressBarRole, qStepIndicator, qSectionLabel, qBackBtn;
   let qSectionQuoteBanner, qSectionQuoteTitle, qSectionQuoteText;
   let qPromptText, qOptionsContainer;
-  let standeeModal, adminModal, mediaPreviewModal, standeeQrHolder, cardFooterQrHolder;
+  let standeeModal, adminModal, mediaPreviewModal, standeeQrHolder;
   let soundToggleBtn, standeeOpenBtn, adminOpenBtn;
   const mediaPreviewState = {
     objectUrl: '',
@@ -604,7 +604,6 @@
     adminModal = document.getElementById('adminModal');
     mediaPreviewModal = document.getElementById('mediaPreviewModal');
     standeeQrHolder = document.getElementById('standeeQrHolder');
-    cardFooterQrHolder = document.getElementById('cardFooterQrHolder');
 
     soundToggleBtn = document.getElementById('soundToggleBtn');
     standeeOpenBtn = document.getElementById('standeeOpenBtn');
@@ -810,7 +809,6 @@
         treeQrState.url = val;
         rebuildQrAndTreeGeometry(val);
         renderBwQrCanvas();
-        renderCardFooterQR();
       });
     }
     if (bwTitleInput) {
@@ -1170,7 +1168,6 @@
     }
 
     renderFeaturesList(persona.features);
-    renderCardFooterQR();
     renderCrowdStatsUI(persona.id);
   }
 
@@ -2168,7 +2165,6 @@
         treeQrState.url = val;
         rebuildQrAndTreeGeometry(val);
         renderBwQrCanvas();
-        renderCardFooterQR();
       });
     }
 
@@ -2178,7 +2174,6 @@
         seasonBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         treeQrState.season = btn.getAttribute('data-season') || 'spring';
-        renderCardFooterQR();
       });
     });
 
@@ -2188,7 +2183,6 @@
         colorDots.forEach(d => d.classList.remove('active'));
         dot.classList.add('active');
         treeQrState.colorKey = dot.getAttribute('data-color') || 'pink';
-        renderCardFooterQR();
       });
     });
 
@@ -2252,19 +2246,6 @@
     }
 
     renderBwQrCanvas();
-    renderCardFooterQR();
-  }
-
-  function renderCardFooterQR() {
-    const targetURL = getQuizURL();
-    if (cardFooterQrHolder && typeof QRCode !== 'undefined') {
-      cardFooterQrHolder.innerHTML = '';
-      const qrCanvas = createPixelGardenQrCanvas(68, targetURL, treeQrState.colorKey, treeQrState.season);
-      qrCanvas.style.width = '58px';
-      qrCanvas.style.height = '58px';
-      qrCanvas.style.borderRadius = '8px';
-      cardFooterQrHolder.appendChild(qrCanvas);
-    }
   }
 
   function openStandeeModal(initialTab) {
