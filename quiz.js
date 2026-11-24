@@ -41,12 +41,14 @@
 
   // Q1–Q10 計分題（選項順序嚴格依表格，不依分數排序）
   // types 對照：0=潛水觀察派, 1=備忘錄日記派, 2=悄悄發佈派, 3=精修完美派, 4=隨心所欲派
+  // promptClauses / promptNote 用於依中文語意與標點斷句，避免手機窄幅切斷詞彙
   const SCORED_QUESTIONS = [
     {
       id: 'Q1',
       section: 'record',
       showQuote: true,
       prompt: '走在路上遇到超美的夕陽，你會？',
+      promptClauses: [['走在路上', '遇到超美的夕陽，', '你會？']],
       options: [
         { letter: 'A', text: '拍下來分享出去', score: 3, types: [2, 3, 4], typesLabel: '悄悄・精修・隨心' },
         { letter: 'B', text: '看一眼記在心裡就好', score: 1, types: [0], typesLabel: '潛水' },
@@ -58,6 +60,7 @@
       section: 'record',
       showQuote: false,
       prompt: '週末出門玩了一整天，回到家後你最常做的事是？',
+      promptClauses: [['週末出門', '玩了一整天，'], ['回到家後', '你最常做的事是？']],
       options: [
         { letter: 'A', text: '滑手機放鬆，不太會整理照片', score: 1, types: [0], typesLabel: '潛水' },
         { letter: 'B', text: '整理照片，順便在備忘錄寫幾句心得', score: 2, types: [1], typesLabel: '備忘錄' },
@@ -69,6 +72,7 @@
       section: 'record',
       showQuote: false,
       prompt: '這樣累積下來，打開你的手機相簿，裡面大多是？',
+      promptClauses: [['這樣累積下來，'], ['打開你的手機相簿，', '裡面大多是？']],
       options: [
         { letter: 'A', text: '截圖和工作資料，生活照不多', score: 1, types: [0], typesLabel: '潛水' },
         { letter: 'B', text: '很多生活照，大多自己看，偶爾分享', score: 2, types: [1, 2], typesLabel: '備忘錄・悄悄' },
@@ -80,6 +84,7 @@
       section: 'share',
       showQuote: true,
       prompt: '一天結束時，今天的心情和發生的事，通常會留在哪裡？',
+      promptClauses: [['一天結束時，'], ['今天的心情', '和發生的事，'], ['通常會留在哪裡？']],
       options: [
         { letter: 'A', text: '大多已經在限動或貼文上了', score: 3, types: [3, 4], typesLabel: '精修・隨心' },
         { letter: 'B', text: '不太會特別留下，過了就過了', score: 1, types: [0], typesLabel: '潛水' },
@@ -91,6 +96,7 @@
       section: 'share',
       showQuote: false,
       prompt: '想分享一件生活小事的時候，你通常會？',
+      promptClauses: [['想分享一件', '生活小事的時候，'], ['你通常會？']],
       options: [
         { letter: 'A', text: '很少有想分享的時候，看別人分享比較多', score: 1, types: [0], typesLabel: '潛水' },
         { letter: 'B', text: '先想想適合放在哪裡、要給誰看', score: 2, types: [1, 2, 3], typesLabel: '備忘錄・悄悄・精修' },
@@ -102,6 +108,7 @@
       section: 'share',
       showQuote: false,
       prompt: '說到發文，從拍照到把貼文發出去，你通常？',
+      promptClauses: [['說到發文，'], ['從拍照到', '把貼文發出去，', '你通常？']],
       options: [
         { letter: 'A', text: '隨手就發，馬上搞定', score: 3, types: [4], typesLabel: '隨心' },
         { letter: 'B', text: '會想一下內容，或挑個時間再發', score: 2, types: [2, 3], typesLabel: '悄悄・精修' },
@@ -113,6 +120,7 @@
       section: 'share',
       showQuote: false,
       prompt: '貼文發出去之後，你希望追蹤者第一時間就看到嗎？',
+      promptClauses: [['貼文發出去之後，'], ['你希望追蹤者', '第一時間', '就看到嗎？']],
       options: [
         { letter: 'A', text: '我很少發文，就算發也是給自己看的', score: 1, types: [0, 1], typesLabel: '潛水・備忘錄' },
         { letter: 'B', text: '我不希望太快被注意到', score: 2, types: [2], typesLabel: '悄悄' },
@@ -124,6 +132,7 @@
       section: 'gaze',
       showQuote: true,
       prompt: '如果這篇貼文沒什麼人按讚，你會？',
+      promptClauses: [['如果這篇貼文', '沒什麼人按讚，'], ['你會？']],
       options: [
         { letter: 'A', text: '開始想是不是照片、文案或發文時間沒選好', score: 2, types: [3], typesLabel: '精修' },
         { letter: 'B', text: '無所謂，發出來就好', score: 3, types: [4], typesLabel: '隨心' },
@@ -135,6 +144,7 @@
       section: 'gaze',
       showQuote: false,
       prompt: '如果朋友跟你說，你的貼文「好像跟平常不太一樣」，你會？',
+      promptClauses: [['如果朋友跟你說，', '你的貼文'], ['「好像跟平常', '不太一樣」，', '你會？']],
       options: [
         { letter: 'A', text: '這種事不太會發生在我身上，我發得很少也很低調', score: 1, types: [0, 1, 2], typesLabel: '潛水・備忘錄・悄悄' },
         { letter: 'B', text: '不在意，我想發什麼就發什麼', score: 3, types: [4], typesLabel: '隨心' },
@@ -146,6 +156,8 @@
       section: 'gaze',
       showQuote: false,
       prompt: '發文前，你會想到「某些人也會看到」嗎？（像是家人、主管、不太熟的朋友）',
+      promptClauses: [['發文前，'], ['你會想到', '「某些人也會看到」嗎？']],
+      promptNote: ['（像是家人、', '主管、', '不太熟的朋友）'],
       options: [
         { letter: 'A', text: '會想到，所以大多留給自己看就好', score: 1, types: [0, 1], typesLabel: '潛水・備忘錄' },
         { letter: 'B', text: '不太會，誰看到都沒關係', score: 3, types: [4], typesLabel: '隨心' },
@@ -160,6 +172,7 @@
     section: 'closing',
     showQuote: true,
     prompt: '那如果發文時，完全不用擔心誰會看到，你最想分享什麼？',
+    promptClauses: [['那如果發文時，'], ['完全不用擔心', '誰會看到，'], ['你最想分享什麼？']],
     options: [
       { letter: 'A', text: '一處讓我停下腳步的風景' },
       { letter: 'B', text: '一句沒說出口的心情' },
@@ -894,6 +907,36 @@
     }, 'backward');
   }
 
+  function appendChunkGroup(parentEl, chunks) {
+    chunks.forEach((part) => {
+      const chunkSpan = document.createElement('span');
+      chunkSpan.className = 'q-chunk';
+      chunkSpan.textContent = part;
+      parentEl.appendChild(chunkSpan);
+    });
+  }
+
+  function renderPromptContent(el, question) {
+    el.textContent = '';
+    if (Array.isArray(question.promptClauses) && question.promptClauses.length > 0) {
+      question.promptClauses.forEach((chunks) => {
+        const clauseSpan = document.createElement('span');
+        clauseSpan.className = 'q-clause';
+        appendChunkGroup(clauseSpan, Array.isArray(chunks) ? chunks : [String(chunks)]);
+        el.appendChild(clauseSpan);
+      });
+    } else {
+      el.textContent = question.prompt;
+    }
+
+    if (Array.isArray(question.promptNote) && question.promptNote.length > 0) {
+      const noteSpan = document.createElement('span');
+      noteSpan.className = 'question-prompt-note';
+      appendChunkGroup(noteSpan, question.promptNote);
+      el.appendChild(noteSpan);
+    }
+  }
+
   function renderCurrentQuestion() {
     const q = ALL_QUESTIONS[currentIndex];
     if (!q) return;
@@ -916,7 +959,7 @@
       }
     }
 
-    if (qPromptText) qPromptText.textContent = q.prompt;
+    if (qPromptText) renderPromptContent(qPromptText, q);
 
     if (qBackBtn) {
       qBackBtn.style.visibility = currentIndex > 0 ? 'visible' : 'hidden';

@@ -720,6 +720,8 @@ body.quiz-page {
   font-weight: 700;
   color: var(--ink-black);
   line-height: 1.55;
+  line-break: strict;
+  word-break: normal;
 }
 
 .question-prompt-text {
@@ -729,6 +731,34 @@ body.quiz-page {
   color: var(--ink-black);
   line-height: 1.45;
   text-align: left;
+  text-wrap: wrap;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.q-clause {
+  display: inline;
+}
+
+.q-chunk {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.question-prompt-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--ink-brown);
+  line-height: 1.5;
+}
+
+@container (max-width: 500px) {
+  .q-clause {
+    display: block;
+  }
 }
 
 .quiz-options-container {
@@ -798,6 +828,8 @@ body.quiz-page {
   font-weight: 600;
   line-height: 1.55;
   color: var(--ink-black);
+  line-break: strict;
+  word-break: normal;
 }
 
 .quiz-bottom-nav-row {
@@ -2428,10 +2460,11 @@ dialog.native-modal-dialog.media-preview-dialog {
   opacity: 1;
 }
 
-/* Typographic Hierarchy Balance & Pretty Wrapping */
+/* Typographic Hierarchy Balance & Pretty Wrapping
+   Note: Multi-clause CJK question prompts/options use semantic clause wrapping (.q-clause/.q-chunk)
+   rather than text-wrap: balance/pretty to avoid splitting Chinese compound words evenly by pixel width. */
 .journal-display-title,
 .torn-card-title,
-.question-prompt-text,
 .result-persona-name,
 .poster-card-heading,
 .admin-title {
@@ -2439,8 +2472,6 @@ dialog.native-modal-dialog.media-preview-dialog {
 }
 
 .torn-card-sub,
-.quote-banner-text,
-.quiz-option-text,
 .result-description-text,
 .poster-card-desc,
 .feature-desc,
