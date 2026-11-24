@@ -811,23 +811,10 @@ body.quiz-page {
 }
 
 .result-persona-motto {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 15px;
   font-weight: 800;
   color: var(--ink-brown);
-}
-
-.result-match-highlight {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  background: #EFE6D4;
-  border: 1.5px solid var(--ink-black);
-  padding: 5px 12px;
-  border-radius: 10px;
-  color: var(--ink-black);
 }
 
 .result-char-stage {
@@ -1289,15 +1276,6 @@ body.quiz-page {
 .live-dot-pulse.offline {
   background: #EA580C;
   box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.18);
-}
-
-.live-stats-total-pill {
-  font-size: 13px;
-  font-weight: 800;
-  background: var(--marker-yellow);
-  border: 1.5px solid var(--ink-black);
-  padding: 4px 12px;
-  border-radius: 99px;
 }
 
 .live-stats-bars {

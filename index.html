@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="style.css?v=20261124_perf1">
 
     <!-- Dedicated Editorial Quiz CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261125_c1">
+    <link rel="stylesheet" href="quiz.css?v=20261125_c2">
 </head>
 
 <body class="quiz-page">
@@ -132,9 +132,6 @@
                             <span class="live-dot-pulse" id="liveSyncDot" aria-hidden="true"></span>
                             <h3>全站即時人格統計</h3>
                         </div>
-                        <div class="live-stats-total-pill">
-                            累積 <strong id="liveStatsTotalCount">0</strong> 人完成
-                        </div>
                     </div>
                     <div class="live-stats-bars" id="liveStatsBars"></div>
                     <div class="live-stats-footer">
@@ -192,7 +189,7 @@
                     <img src="assets/icon.png" alt="MapMo" width="44" height="44" class="analyzing-logo-icon">
                 </div>
                 <h2 class="analyzing-title">正在比對你的社群派別相似度...</h2>
-                <p class="analyzing-subtext" id="analyzingSubtext">正在核對 Q1–Q10 五大派別吻合題數...</p>
+                <p class="analyzing-subtext" id="analyzingSubtext">正在比對 Q1–Q10 社群光譜分佈...</p>
             </div>
         </section>
 
@@ -215,9 +212,6 @@
                             <span class="result-issue-pill" id="personaIssuePill">No. 1 · THE QUIET POSTER</span>
                             <h2 class="result-persona-name" id="personaMainTitle">悄悄發佈派</h2>
                             <p class="result-persona-motto" id="personaMotto">發了，但希望你晚點再看到</p>
-                            <div class="result-match-highlight" id="personaMatchHighlight">
-                                相似度最高 · <strong>80%</strong>（吻合 8 / 10 題）
-                            </div>
                         </div>
 
                         <div class="result-char-stage" id="resultCharStage">
@@ -317,7 +311,7 @@
                 <!-- 結果頁即時全場人格統計 -->
                 <div class="result-crowd-card" id="resultCrowdCard">
                     <div class="result-crowd-header">
-                        <span class="result-crowd-tag"><i class="fas fa-users" aria-hidden="true"></i> 展場即時人數對照</span>
+                        <span class="result-crowd-tag"><i class="fas fa-users" aria-hidden="true"></i> 展場即時派別佔比</span>
                         <span class="result-crowd-sync" id="resultCrowdSyncBadge">全場即時同步</span>
                     </div>
                     <p class="result-crowd-headline" id="resultCrowdHeadline">正在讀取全站人格統計...</p>
@@ -630,7 +624,7 @@
 
     <!-- Scripts -->
     <script src="assets/vendor/qrcode.js"></script>
-    <script src="quiz.js?v=20261125_c1"></script>
+    <script src="quiz.js?v=20261125_c2"></script>
 </body>
 
 </html>

@@ -1043,7 +1043,7 @@
 
     const subText = document.getElementById('analyzingSubtext');
     const messages = [
-      '正在核對 Q1–Q10 五大派別吻合題數...',
+      '正在比對 Q1–Q10 社群光譜分佈...',
       '正在計算光譜相似度分佈與潛在影子...',
       '正在準備你的《習慣特刊》測驗檔案...'
     ];
@@ -1093,11 +1093,6 @@
 
     const mottoEl = document.getElementById('personaMotto');
     if (mottoEl) mottoEl.textContent = persona.motto;
-
-    const matchEl = document.getElementById('personaMatchHighlight');
-    if (matchEl) {
-      matchEl.innerHTML = `吻合度最高 · <strong>${evalObj.mainPct}%</strong>（吻合 ${evalObj.mainMatchCount} / 10 題）`;
-    }
 
     const charImgEl = document.getElementById('resultCharImg');
     if (charImgEl) {
@@ -1371,29 +1366,23 @@
     ctx.setLineDash([]);
 
     // 派別稱號 + 徽章
-    drawRoundRect(ctx, cardX + 44, cardY + 112, 340, 42, 21, '#FFE45E', '#1E1B16', 2.5);
+    drawRoundRect(ctx, cardX + 44, cardY + 124, 340, 42, 21, '#FFE45E', '#1E1B16', 2.5);
     ctx.fillStyle = '#1E1B16';
     ctx.textAlign = 'center';
     ctx.font = '900 18px "Outfit", sans-serif';
-    ctx.fillText(p.enTitle, cardX + 44 + 170, cardY + 140);
+    ctx.fillText(p.enTitle, cardX + 44 + 170, cardY + 152);
 
     ctx.textAlign = 'left';
     ctx.fillStyle = p.textColor;
     ctx.font = '900 58px "Noto Sans TC", sans-serif';
-    ctx.fillText(p.name, cardX + 44, cardY + 225);
+    ctx.fillText(p.name, cardX + 44, cardY + 236);
 
     ctx.fillStyle = '#4A4035';
     ctx.font = '800 24px "Noto Sans TC", sans-serif';
-    ctx.fillText(p.motto, cardX + 44, cardY + 272);
-
-    // 相似度徽章
-    drawRoundRect(ctx, cardX + 44, cardY + 296, 360, 44, 12, '#EFE6D4', '#1E1B16', 2);
-    ctx.fillStyle = '#1E1B16';
-    ctx.font = '800 20px "Noto Sans TC", sans-serif';
-    ctx.fillText(`吻合度最高 ${ev.mainPct}%（${ev.mainMatchCount}/10 題）`, cardX + 64, cardY + 325);
+    ctx.fillText(p.motto, cardX + 44, cardY + 286);
 
     // 派別描述區塊
-    const descY = cardY + 382;
+    const descY = cardY + 366;
     drawRoundRect(ctx, cardX + 44, descY, cardW - 88, ev.showSecond ? 178 : 120, 20, '#FAF5EB', '#E3D9C6', 2);
     ctx.fillStyle = '#1E1B16';
     ctx.font = '600 22px "Noto Sans TC", sans-serif';
@@ -1484,7 +1473,7 @@
               filename,
               blob,
               shareTitle: `我是「${p.name}」｜MapMo 社群心理測驗`,
-              shareText: `我在 MapMo 測出與「${p.name}」吻合度 ${ev.mainPct}%！測測你是哪一種社群派？ ${getQuizURL()}`,
+              shareText: `我在 MapMo 測出我是「${p.name}」：${p.motto}！測測你是哪一種社群派？ ${getQuizURL()}`,
               mimeType: 'image/png'
             });
             return;
@@ -2736,8 +2725,6 @@
     const s = statsState.summary;
     const total = Math.max(0, s.total || 0);
 
-    const startBadge = document.getElementById('startTotalBadge');
-    const liveTotalEl = document.getElementById('liveStatsTotalCount');
     const startBarsEl = document.getElementById('liveStatsBars');
     const dotEl = document.getElementById('liveSyncDot');
     const noteEl = document.getElementById('liveStatsSourceNote');
@@ -2745,8 +2732,6 @@
     const configured = Boolean(getSheetsEndpointUrl());
     const localBlocked = isLiveSyncBlockedOnLocalhost();
 
-    if (startBadge) startBadge.textContent = String(total);
-    if (liveTotalEl) liveTotalEl.textContent = String(total);
     if (dotEl) dotEl.classList.toggle('offline', !configured || localBlocked || (!statsState.isOnline && !statsState.isSyncing));
     if (noteEl) {
       if (localBlocked) noteEl.textContent = '本機預覽模式（已阻擋寫入試算表，加 ?liveSync=1 可測同步）';
@@ -2770,7 +2755,7 @@
               <span>${escapeHtml(p.name)}</span>
               ${isMe ? '<span class="live-stat-you-badge">你</span>' : ''}
             </span>
-            <span class="live-stat-num">${cnt} 人 (${pct}%)</span>
+            <span class="live-stat-num">${pct}%</span>
           </div>
           <div class="live-stat-track">
             <div class="live-stat-fill" style="width:${pct}%;background:${p.barColor};"></div>
@@ -2788,7 +2773,11 @@
       const p = PERSONAS[highlightPersonaId];
       const myCnt = s[highlightPersonaId] || 0;
       const myPct = total > 0 ? Math.round((myCnt / total) * 100) : 0;
-      if (resultHeadline) resultHeadline.textContent = `全場累積 ${total} 人測驗，其中 ${myCnt} 人（${myPct}%）和你同屬「${p.name}」`;
+      if (resultHeadline) {
+        resultHeadline.textContent = total > 0
+          ? `目前全場有 ${myPct}% 和你同屬「${p.name}」`
+          : '全場即時派別佔比統計中';
+      }
       if (resultBars) resultBars.innerHTML = buildBarsHtml(highlightPersonaId);
       if (resultBadge) {
         if (!configured) resultBadge.textContent = '已記錄（本機）';
