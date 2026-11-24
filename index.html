@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="style.css?v=20261121_f1">
 
     <!-- Dedicated Editorial Quiz CSS -->
-    <link rel="stylesheet" href="quiz.css?v=20261124_cjk1">
+    <link rel="stylesheet" href="quiz.css?v=20261124_cjk2">
 </head>
 
 <body class="quiz-page">
@@ -46,7 +46,7 @@
             </a>
 
             <div class="nav-actions-group">
-                <button type="button" class="pill-action-btn nav-admin-btn" id="adminOpenBtn" aria-label="開啟數據後台與 Excel 匯出">
+                <button type="button" class="pill-action-btn nav-admin-btn" id="adminOpenBtn" hidden aria-label="開啟數據後台與 Excel 匯出">
                     <i class="fas fa-chart-bar" aria-hidden="true"></i><span class="pill-label-full"> 數據後台</span><span class="pill-label-short"> 後台</span>
                 </button>
                 <button type="button" class="pill-action-btn" id="standeeOpenBtn" aria-label="開啟測驗 QR Code 與分享">
@@ -198,24 +198,6 @@
                         <span class="live-stats-source-note" id="liveStatsSourceNote">全場匿名統計即時更新中</span>
                     </div>
                 </div>
-
-                <!-- 展場工作人員工具 (收納於頁面最底，不干擾手機訪客首屏動線) -->
-                <details class="exhibitor-tools-drawer" id="exhibitorToolsDrawer">
-                    <summary><i class="fas fa-sliders-h" aria-hidden="true"></i> 展場工作人員工具（立牌 QR · 數據後台）</summary>
-                    <div class="exhibitor-tools-body">
-                        <div class="start-qr-quick-row">
-                            <button type="button" class="sketch-chip-btn" id="btnOpenTreeQrFromHome">
-                                <i class="fas fa-tree" style="color: #4D7C0F;" aria-hidden="true"></i> 3D 情緒樹 QR
-                            </button>
-                            <button type="button" class="sketch-chip-btn dark" id="btnOpenBwQrFromHome">
-                                <i class="fas fa-print" aria-hidden="true"></i> 黑白列印版 QR
-                            </button>
-                            <button type="button" class="live-stats-admin-link" id="btnOpenAdminFromHome">
-                                <i class="fas fa-table" aria-hidden="true"></i> 後台明細 / Excel 匯出
-                            </button>
-                        </div>
-                    </div>
-                </details>
             </div>
         </section>
 
@@ -412,13 +394,6 @@
                     <p class="result-crowd-headline" id="resultCrowdHeadline">正在讀取全站人格統計...</p>
                     <div class="live-stats-bars compact" id="resultCrowdBars"></div>
                 </div>
-
-                <div class="result-staff-footer">
-                    <button type="button" class="result-staff-qr-link" id="btnOpenQrFromResult">
-                        <i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌 / 列印黑白 QR 工具
-                    </button>
-                </div>
-
             </div>
         </section>
 
@@ -607,6 +582,9 @@
                 <button type="button" class="admin-btn ghost" id="btnRefreshAdmin">
                     <i class="fas fa-sync-alt" aria-hidden="true"></i> 重新抓取試算表
                 </button>
+                <button type="button" class="admin-btn ghost" id="btnOpenQrFromAdmin">
+                    <i class="fas fa-qrcode" aria-hidden="true"></i> 展場立牌 / 黑白 QR
+                </button>
             </div>
 
             <details class="admin-sheets-box" id="adminSheetsConfigBox" style="margin-bottom:18px;">
@@ -723,7 +701,7 @@
 
     <!-- Scripts -->
     <script src="assets/vendor/qrcode.js"></script>
-    <script src="quiz.js?v=20261124_cjk1"></script>
+    <script src="quiz.js?v=20261124_cjk2"></script>
 </body>
 
 </html>

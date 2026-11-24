@@ -730,11 +730,12 @@
       sharePreviewBtn.addEventListener('click', () => shareActivePreviewMedia());
     }
 
-    const openQrResultBtn = document.getElementById('btnOpenQrFromResult');
-    if (openQrResultBtn) {
-      openQrResultBtn.addEventListener('click', () => {
+    const btnOpenQrFromAdmin = document.getElementById('btnOpenQrFromAdmin');
+    if (btnOpenQrFromAdmin) {
+      btnOpenQrFromAdmin.addEventListener('click', () => {
         playSound('tap');
-        openStandeeModal();
+        closeAdminModal();
+        openStandeeModal('bw');
       });
     }
 
@@ -748,30 +749,6 @@
         soundToggleBtn.setAttribute('aria-label', isSoundEnabled ? '切換互動音效（目前開啟）' : '切換互動音效（目前靜音）');
         soundToggleBtn.classList.toggle('active', isSoundEnabled);
         if (isSoundEnabled) playSound('tap');
-      });
-    }
-
-    const btnOpenTreeHome = document.getElementById('btnOpenTreeQrFromHome');
-    if (btnOpenTreeHome) {
-      btnOpenTreeHome.addEventListener('click', () => {
-        playSound('tap');
-        openStandeeModal('tree');
-      });
-    }
-
-    const btnOpenBwHome = document.getElementById('btnOpenBwQrFromHome');
-    if (btnOpenBwHome) {
-      btnOpenBwHome.addEventListener('click', () => {
-        playSound('tap');
-        openStandeeModal('bw');
-      });
-    }
-
-    const btnOpenAdminHome = document.getElementById('btnOpenAdminFromHome');
-    if (btnOpenAdminHome) {
-      btnOpenAdminHome.addEventListener('click', () => {
-        playSound('tap');
-        openAdminModal();
       });
     }
 
@@ -2548,6 +2525,8 @@
     }
 
     const params = new URLSearchParams(window.location.search);
+    const isStaffMode = params.get('admin') === '1' || params.get('staff') === '1';
+    if (adminOpenBtn) adminOpenBtn.hidden = !isStaffMode;
     if (params.get('admin') === '1') openAdminModal();
 
     document.addEventListener('visibilitychange', () => {

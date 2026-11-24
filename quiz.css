@@ -199,6 +199,10 @@ body.quiz-page {
   white-space: nowrap;
 }
 
+.pill-action-btn[hidden] {
+  display: none !important;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .pill-action-btn:hover {
     transform: translate(-1px, -1px);
@@ -600,38 +604,6 @@ body.quiz-page {
 
 .sketch-chip-btn:active {
   transform: scale(0.97);
-}
-
-/* Exhibitor / Staff Drawer at Bottom of Home */
-.exhibitor-tools-drawer {
-  width: 100%;
-  max-width: 660px;
-  background: rgba(255, 253, 248, 0.72);
-  border: 1.5px dashed rgba(30, 27, 22, 0.28);
-  border-radius: 14px;
-  padding: 10px 16px;
-}
-
-.exhibitor-tools-drawer summary {
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--ink-brown);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  list-style: none;
-}
-
-.exhibitor-tools-drawer summary::-webkit-details-marker {
-  display: none;
-}
-
-.exhibitor-tools-body {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(30, 27, 22, 0.16);
 }
 
 .start-exhibition-hint {
@@ -1471,27 +1443,6 @@ body.quiz-page {
 .btn-result-action:active {
   transform: translate(1px, 1px);
   box-shadow: 2px 2px 0 var(--ink-black);
-}
-
-.result-staff-footer {
-  display: flex;
-  justify-content: center;
-  padding-top: 2px;
-}
-
-.result-staff-qr-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: var(--ink-brown);
-  font-family: var(--font-tw);
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 8px 12px;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -2489,8 +2440,6 @@ dialog.native-modal-dialog.media-preview-dialog {
   .quiz-back-btn,
   .btn-download-poster-only,
   .btn-result-action,
-  .result-staff-qr-link,
-  .exhibitor-tools-drawer summary,
   .standee-modal-close,
   .tree-qr-toggle-pill,
   .tree-season-btn,
@@ -2498,8 +2447,7 @@ dialog.native-modal-dialog.media-preview-dialog {
   .tree-extra-btn,
   .qr-studio-tab,
   .bw-action-btn,
-  .admin-btn,
-  .live-stats-admin-link {
+  .admin-btn {
     min-block-size: 44px;
   }
   .pill-action-btn,
