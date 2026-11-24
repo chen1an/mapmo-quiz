@@ -328,8 +328,8 @@ body.quiz-page {
 .journal-diorama-img {
   width: 100%;
   height: auto;
-  aspect-ratio: 1200 / 896;
-  object-fit: cover;
+  aspect-ratio: 1080 / 806;
+  object-fit: contain;
   display: block;
   border-radius: 18px;
 }
@@ -342,7 +342,7 @@ body.quiz-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(12px, 2dvh, 18px);
+  gap: clamp(12px, 2svh, 18px);
 }
 
 .start-cta-row {
@@ -2333,9 +2333,9 @@ dialog.native-modal-dialog.media-preview-dialog {
     padding: 10px 14px 44px;
   }
 
-  /* Start Screen — 依比例自適應 320px 小螢幕 ～ 430px 大手機，並保證首屏直接露出 CTA 與五大派別 */
+  /* Start Screen — 依比例自適應 320px 小螢幕 ～ 430px 大手機，並保證完整呈現手札地圖不裁切、滑動不縮放 */
   .journal-hero-stage {
-    gap: clamp(10px, 1.8dvh, 15px);
+    gap: clamp(10px, 1.8svh, 15px);
   }
 
   .journal-kicker-note {
@@ -2356,18 +2356,19 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .journal-diorama-img {
-    height: clamp(8.5rem, min(24dvh, 45vw), 14.5rem);
-    aspect-ratio: auto;
-    object-position: center 46%;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1080 / 806;
+    object-fit: contain;
   }
 
   .start-actions-stage {
-    gap: clamp(10px, 1.8dvh, 14px);
+    gap: clamp(10px, 1.8svh, 14px);
   }
 
   .start-btn-sketch {
     width: 100%;
-    padding: clamp(11px, 2dvh, 14px) clamp(14px, 4cqi, 22px);
+    padding: clamp(11px, 2svh, 14px) clamp(14px, 4cqi, 22px);
     font-size: clamp(0.94rem, 0.86rem + 0.45cqi, 1.05rem);
     min-block-size: 48px;
   }
@@ -2422,16 +2423,16 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .quiz-progress-bar-wrap {
-    margin-bottom: clamp(8px, 1.5dvh, 12px);
+    margin-bottom: clamp(8px, 1.5svh, 12px);
   }
 
   .quiz-nav-top-row {
-    margin-bottom: clamp(8px, 1.5dvh, 12px);
+    margin-bottom: clamp(8px, 1.5svh, 12px);
   }
 
   .quiz-section-quote-banner {
-    padding: clamp(8px, 1.5dvh, 11px) clamp(10px, 3cqi, 14px);
-    margin-bottom: clamp(10px, 1.8dvh, 14px);
+    padding: clamp(8px, 1.5svh, 11px) clamp(10px, 3cqi, 14px);
+    margin-bottom: clamp(10px, 1.8svh, 14px);
   }
 
   .quote-banner-section {
@@ -2446,16 +2447,16 @@ dialog.native-modal-dialog.media-preview-dialog {
 
   .question-prompt-text {
     font-size: clamp(1.06rem, 0.92rem + 1.15cqi, 1.32rem);
-    margin-bottom: clamp(10px, 2dvh, 16px);
+    margin-bottom: clamp(10px, 2svh, 16px);
     line-height: 1.4;
   }
 
   .quiz-options-container {
-    gap: clamp(7px, 1.4dvh, 10px);
+    gap: clamp(7px, 1.4svh, 10px);
   }
 
   .quiz-option-btn {
-    padding: clamp(10px, 1.8dvh, 13px) clamp(12px, 3.5cqi, 15px);
+    padding: clamp(10px, 1.8svh, 13px) clamp(12px, 3.5cqi, 15px);
     min-height: 48px;
   }
 
@@ -2465,23 +2466,23 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .quiz-bottom-nav-row {
-    margin-top: clamp(10px, 1.8dvh, 14px);
+    margin-top: clamp(10px, 1.8svh, 14px);
   }
 
   .quiz-back-btn {
     padding: 8px 10px 8px 4px;
   }
 
-  /* Result Screen — 圖片與圖表改雙軸比例 */
+  /* Result Screen — 圖片與圖表改雙軸比例（使用 svh 避免手機工具列收合造成滑動縮放） */
   .result-zine-card {
     padding: clamp(1rem, 4.2cqi, 1.35rem) clamp(0.9rem, 4cqi, 1.2rem);
-    gap: clamp(12px, 2.2dvh, 18px);
+    gap: clamp(12px, 2.2svh, 18px);
   }
 
   .result-hero-grid {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: clamp(8px, 1.5dvh, 12px);
+    gap: clamp(8px, 1.5svh, 12px);
   }
 
   .result-char-stage {
@@ -2489,13 +2490,13 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .result-char-img {
-    max-width: clamp(9.5rem, min(46vw, 25dvh), 14rem);
+    max-width: clamp(9.5rem, min(46vw, 25svh), 14rem);
     margin: 0 auto;
   }
 
   @supports (width: 1cqi) {
     .result-char-img {
-      max-width: clamp(9.5rem, min(46cqi, 25dvh), 14rem);
+      max-width: clamp(9.5rem, min(46cqi, 25svh), 14rem);
     }
   }
 
@@ -2519,7 +2520,7 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .spectrum-col-track {
-    height: clamp(4.75rem, min(15dvh, 24cqi), 8rem);
+    height: clamp(4.75rem, min(15svh, 24cqi), 8rem);
   }
 
   .spectrum-col-label {
@@ -2535,7 +2536,7 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .poster-thumb-wrap {
-    max-width: clamp(9.5rem, min(46cqi, 27dvh), 13rem);
+    max-width: clamp(9.5rem, min(46cqi, 27svh), 13rem);
     margin: 0 auto;
   }
 
@@ -2697,9 +2698,12 @@ dialog.native-modal-dialog.media-preview-dialog {
   }
 
   .journal-diorama-img {
-    height: clamp(6.5rem, 30dvh, 9.5rem);
-    aspect-ratio: auto;
-    object-position: center 46%;
+    width: auto;
+    max-width: 100%;
+    height: clamp(6.5rem, 32svh, 9.5rem);
+    aspect-ratio: 1080 / 806;
+    object-fit: contain;
+    margin: 0 auto;
   }
 
   .quiz-step-card {
